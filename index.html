@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#171310">
+<title>Pizzaria Primos — Cardápio</title>
+<meta name="description" content="Forno a lenha desde 2005 em Reginópolis-SP. Monte sua pizza e mande o pedido no WhatsApp.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <img class="brand__logo" src="assets/logo.png" alt="" width="34" height="32">
+    <span class="brand__name">Primos</span>
+  </div>
+  <div class="top__right">
+    <span id="statusPill" class="pill pill--closed"><span class="pill__dot"></span><span id="statusPillText">—</span></span>
+    <button id="openCart" class="cart-btn" hidden>Pedido <span class="cart-btn__count" id="cartCount">0</span></button>
+  </div>
+</header>
+
+<section class="hero" id="hero">
+  <div class="hero__glow"></div>
+  <div class="hero__inner">
+    <img class="hero__logo" src="assets/logo.png" alt="Pizzaria Primos — forno a lenha, desde 2005" width="240" height="223">
+    <h1 class="hero__title">Pizza de forno a lenha</h1>
+    <p class="hero__sub">Feita na hora e entregue em toda a Reginópolis.</p>
+    <p class="hero__status" id="heroStatus">Carregando horário…</p>
+  </div>
+</section>
+
+<main class="card" id="cardapio">
+  <div class="card__head">
+    <h2 class="card__title">Cardápio</h2>
+    <p class="card__lead">Toque num sabor para montar do seu jeito. No fim, a gente abre o WhatsApp com o pedido pronto — é só enviar.</p>
+  </div>
+
+  <div id="menu"></div>
+
+  <p class="card__foot" id="cardFoot"></p>
+</main>
+
+<div class="bar" id="bar">
+  <button class="bar__btn" id="barBtn">
+    <span id="barLabel">Ver meu pedido</span>
+    <span class="bar__price" id="barPrice">R$ 0,00</span>
+  </button>
+</div>
+
+<footer class="foot">
+  <div>Pizzaria Primos · Reginópolis-SP · quinta a sábado, 19h–22h</div>
+  <div>WhatsApp <a id="footWa" href="#">(14) 99782-4261</a> · Instagram <a id="footIg" href="#" target="_blank" rel="noopener">@primosprizzaria._</a></div>
+  <div>Apenas entrega · sem taxa em toda a cidade</div>
+</footer>
+
+
+<!-- ======================= DIÁLOGO: MONTAR PIZZA ======================= -->
+<dialog id="sheet">
+  <div class="sheet__scroll">
+    <div class="sheet__grab"><button class="sheet__x" data-close aria-label="Fechar">✕</button></div>
+    <div id="sheetBody"></div>
+  </div>
+</dialog>
+
+<!-- ======================= DIÁLOGO: PEDIDO ============================= -->
+<dialog id="order">
+  <div class="sheet__scroll">
+    <div class="sheet__grab"><button class="sheet__x" data-close aria-label="Fechar">✕</button></div>
+    <div class="sheet__head"><h2 class="sheet__name">Seu pedido</h2></div>
+    <div id="orderLines"></div>
+
+    <form id="checkout" novalidate>
+      <hr class="soft">
+      <div class="block__t">Entrega — Reginópolis-SP</div>
+      <div class="field">
+        <label for="f-nome">Nome</label>
+        <input type="text" id="f-nome" name="nome" autocomplete="name" required>
+      </div>
+      <div class="field">
+        <label for="f-tel">WhatsApp / telefone</label>
+        <input type="tel" id="f-tel" name="telefone" autocomplete="tel" inputmode="tel" placeholder="(14) 9....." required>
+      </div>
+      <div class="row-n">
+        <div class="field">
+          <label for="f-rua">Rua</label>
+          <input type="text" id="f-rua" name="rua" autocomplete="address-line1" required>
+        </div>
+        <div class="field">
+          <label for="f-num">Número</label>
+          <input type="text" id="f-num" name="numero" inputmode="numeric" required>
+        </div>
+      </div>
+      <div class="field">
+        <label for="f-bairro">Bairro</label>
+        <input type="text" id="f-bairro" name="bairro" autocomplete="address-level3" required>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label for="f-compl">Complemento</label>
+          <input type="text" id="f-compl" name="complemento" placeholder="casa, fundos, apto…">
+        </div>
+        <div class="field">
+          <label for="f-ref">Ponto de referência</label>
+          <input type="text" id="f-ref" name="referencia" placeholder="perto de…">
+        </div>
+      </div>
+
+      <div class="block__t" style="margin-top:18px">Pagamento</div>
+      <label class="opt"><input type="radio" name="pagamento" value="Pix" required><span class="opt__label">Pix</span><span class="opt__meta">chave enviada no chat</span></label>
+      <label class="opt"><input type="radio" name="pagamento" value="Dinheiro"><span class="opt__label">Dinheiro</span></label>
+      <label class="opt"><input type="radio" name="pagamento" value="Cartão"><span class="opt__label">Cartão na entrega</span><span class="opt__meta">débito ou crédito</span></label>
+
+      <div id="trocoWrap" hidden>
+        <label class="save-row" style="margin-top:10px"><input type="checkbox" id="f-semtroco" name="semtroco"> Não preciso de troco</label>
+        <div class="field" id="trocoField">
+          <label for="f-troco">Troco para quanto?</label>
+          <input type="number" id="f-troco" name="troco" inputmode="numeric" min="0" placeholder="ex.: 100">
+        </div>
+      </div>
+
+      <label class="save-row"><input type="checkbox" id="f-save" checked> Salvar meus dados neste aparelho para a próxima vez</label>
+
+      <div id="closedWarn" class="closed-warn" hidden></div>
+
+      <div class="sheet__cta">
+        <button type="submit" class="btn" id="sendBtn">
+          <span id="sendLabel">Enviar pedido no WhatsApp</span>
+          <span class="btn__price" id="sendPrice"></span>
+        </button>
+      </div>
+      <button type="button" class="btn btn--ghost btn--wide" id="copyBtn" style="margin-top:10px">Copiar pedido em texto</button>
+      <textarea class="msg-box" id="msgBox" rows="7" readonly hidden></textarea>
+    </form>
+  </div>
+</dialog>
+
+
+<script type="module" src="src/main.js"></script>
+</body>
+</html>

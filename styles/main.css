@@ -1,0 +1,374 @@
+/* ============================================================================
+   PIZZARIA PRIMOS — folha de estilo
+   Direção: "forno a lenha, à noite". Fundo carvão, a única luz é a brasa.
+   O cartão do cardápio é um papel creme sobre a mesa.
+   ========================================================================== */
+
+:root{
+  --carvao:   #171310;   /* base, quase preto quente */
+  --carvao-2: #211b16;   /* superfícies elevadas no escuro */
+  --brasa:    #e24e1b;   /* acento principal: a boca do forno */
+  --brasa-2:  #ff6a33;   /* brasa clara p/ foco/hover */
+  --dourado:  #e9a23b;   /* chama, detalhes pequenos */
+  --creme:    #f3e7d3;   /* papel do cardápio */
+  --creme-2:  #e7d7bd;   /* linhas / bordas no creme */
+  --folha:    #3b5b3a;   /* verde: só p/ status "aberto" */
+  --fumaca:   #b7a99a;   /* texto secundário no escuro */
+  --tinta:    #2a211a;   /* texto sobre o creme */
+
+  --fonte-titulo: "Fraunces", Georgia, "Times New Roman", serif;
+  --fonte-texto:  "Hanken Grotesk", "Segoe UI", system-ui, sans-serif;
+  --fonte-ticket: "DM Mono", ui-monospace, Consolas, monospace;
+
+  --raio: 16px;
+  --wrap: 940px;
+}
+
+*,*::before,*::after{ box-sizing:border-box; }
+html{ -webkit-text-size-adjust:100%; }
+body{
+  margin:0;
+  background:var(--carvao);
+  color:var(--creme);
+  font-family:var(--fonte-texto);
+  font-size:17px;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+h1,h2,h3{ font-family:var(--fonte-titulo); font-weight:600; line-height:1.05; margin:0; }
+button{ font:inherit; color:inherit; cursor:pointer; }
+a{ color:inherit; }
+:focus-visible{ outline:2px solid var(--brasa-2); outline-offset:3px; border-radius:4px; }
+
+.eyebrow{
+  font-family:var(--fonte-ticket);
+  font-size:12px;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--dourado);
+}
+
+/* ---------- Cabeçalho fixo -------------------------------------------------- */
+.top{
+  position:sticky; top:0; z-index:40;
+  display:flex; align-items:center; justify-content:space-between;
+  gap:12px;
+  padding:12px clamp(16px,4vw,28px);
+  background:color-mix(in srgb, var(--carvao) 82%, transparent);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid color-mix(in srgb, var(--creme) 10%, transparent);
+}
+.brand{ display:flex; align-items:center; gap:9px; }
+.brand__logo{ width:34px; height:auto; display:block; }
+.brand__name{
+  font-family:var(--fonte-titulo); font-weight:700; font-size:20px;
+  letter-spacing:.01em;
+}
+.top__right{ display:flex; align-items:center; gap:10px; }
+
+.pill{
+  display:inline-flex; align-items:center; gap:7px;
+  padding:6px 11px; border-radius:999px;
+  font-family:var(--fonte-ticket); font-size:12px; letter-spacing:.04em;
+  border:1px solid transparent; white-space:nowrap;
+}
+.pill__dot{ width:7px; height:7px; border-radius:50%; background:currentColor; }
+.pill--open{ color:var(--dourado); border-color:color-mix(in srgb,var(--dourado) 45%,transparent);
+  background:color-mix(in srgb,var(--dourado) 12%,transparent); }
+.pill--open .pill__dot{ box-shadow:0 0 0 3px color-mix(in srgb,var(--dourado) 30%,transparent); }
+.pill--closed{ color:var(--fumaca); border-color:color-mix(in srgb,var(--fumaca) 30%,transparent); }
+
+.cart-btn{
+  display:inline-flex; align-items:center; gap:7px;
+  padding:7px 13px; border-radius:999px;
+  background:var(--brasa); color:#fff; border:0; font-weight:600; font-size:14px;
+  transition:transform .12s ease, background .12s ease;
+}
+.cart-btn:hover{ background:var(--brasa-2); }
+.cart-btn:active{ transform:scale(.96); }
+.cart-btn[hidden]{ display:none; }
+.cart-btn__count{
+  font-family:var(--fonte-ticket); font-size:12px;
+  background:rgba(0,0,0,.22); padding:1px 7px; border-radius:999px;
+}
+
+/* ---------- Hero: o forno ------------------------------------------------- */
+.hero{
+  position:relative; overflow:hidden;
+  padding:clamp(56px,14vw,120px) clamp(16px,4vw,28px) clamp(90px,16vw,150px);
+  text-align:center;
+}
+.hero__glow{
+  position:absolute; left:50%; top:38%; translate:-50% -50%;
+  width:min(1100px,150vw); aspect-ratio:1;
+  background:radial-gradient(circle,
+    color-mix(in srgb,var(--brasa) 55%,transparent) 0%,
+    color-mix(in srgb,var(--brasa) 20%,transparent) 34%,
+    transparent 62%);
+  pointer-events:none;
+  animation:brasa 7s ease-in-out infinite;
+}
+@keyframes brasa{
+  0%,100%{ opacity:.6;  transform:scale(1); }
+  50%    { opacity:.92; transform:scale(1.07); }
+}
+.hero.is-closed .hero__glow{ animation:none; opacity:.22; filter:grayscale(.5); }
+.hero__inner{ position:relative; max-width:var(--wrap); margin-inline:auto; }
+.hero__logo{
+  width:clamp(184px,44vw,248px); height:auto; display:block;
+  margin:0 auto 20px;
+  filter:drop-shadow(0 14px 34px rgba(0,0,0,.5));
+  transition:filter .4s ease;
+}
+.hero.is-closed .hero__logo{ filter:grayscale(.45) brightness(.82) drop-shadow(0 14px 34px rgba(0,0,0,.5)); }
+.hero__title{
+  font-size:clamp(34px,8vw,60px);
+  font-weight:600;
+  font-variation-settings:"SOFT" 40, "WONK" 1;
+  letter-spacing:-.015em;
+  text-wrap:balance;
+}
+.hero__sub{
+  margin:12px auto 0; max-width:34ch;
+  color:var(--creme); font-size:clamp(15px,4vw,18px);
+}
+.hero__status{
+  margin-top:26px;
+  font-family:var(--fonte-ticket); font-size:13px; letter-spacing:.03em;
+  color:var(--fumaca);
+}
+.hero__status b{ color:var(--dourado); font-weight:500; }
+
+/* ---------- Cartão do cardápio ------------------------------------------- */
+.card{
+  position:relative; z-index:2;
+  max-width:var(--wrap);
+  margin:-70px auto 0;
+  padding:clamp(24px,5vw,44px);
+  background:var(--creme);
+  color:var(--tinta);
+  border-radius:22px;
+  box-shadow:0 40px 80px -30px rgba(0,0,0,.6), 0 0 0 1px rgba(0,0,0,.04);
+}
+.card__head{ text-align:center; margin-bottom:8px; }
+.card__title{ font-size:clamp(30px,7vw,44px); color:var(--tinta); }
+.card__lead{
+  margin:10px auto 0; max-width:46ch;
+  color:color-mix(in srgb,var(--tinta) 70%,transparent); font-size:15px;
+}
+.card__foot{
+  margin-top:30px; padding-top:18px;
+  border-top:1px solid var(--creme-2);
+  font-family:var(--fonte-ticket); font-size:12px; line-height:1.7;
+  color:color-mix(in srgb,var(--tinta) 66%,transparent);
+}
+
+.tier{
+  display:flex; align-items:baseline; justify-content:space-between; gap:12px;
+  margin:34px 0 6px;
+  padding-bottom:8px;
+  border-bottom:2px solid var(--tinta);
+}
+.tier:first-of-type{ margin-top:20px; }
+.tier__label{ font-family:var(--fonte-titulo); font-weight:600; font-size:21px; }
+.tier__price{ font-family:var(--fonte-ticket); font-size:13px; letter-spacing:.04em; }
+
+.list{ display:grid; grid-template-columns:1fr; gap:2px; }
+.flav{
+  display:grid; grid-template-columns:1fr auto;
+  gap:2px 16px;
+  width:100%; text-align:left;
+  padding:14px 6px;
+  background:transparent; border:0;
+  border-bottom:1px solid var(--creme-2);
+  transition:background .12s ease, padding-left .12s ease;
+}
+.flav:hover,.flav:focus-visible{
+  background:color-mix(in srgb,var(--dourado) 16%,transparent);
+  padding-left:12px;
+}
+.flav__name{ font-family:var(--fonte-titulo); font-weight:600; font-size:18px; grid-column:1; }
+.flav__desc{
+  grid-column:1; font-size:13.5px;
+  color:color-mix(in srgb,var(--tinta) 62%,transparent);
+}
+.flav__price{
+  grid-column:2; grid-row:1 / span 2; align-self:center;
+  font-family:var(--fonte-ticket); font-size:15px; white-space:nowrap;
+}
+.flav__add{
+  grid-column:2; grid-row:1 / span 2; align-self:center;
+  display:none;
+  font-family:var(--fonte-ticket); font-size:12px;
+  color:var(--brasa);
+}
+.flav:hover .flav__price,.flav:focus-visible .flav__price{ display:none; }
+.flav:hover .flav__add,.flav:focus-visible .flav__add{ display:block; }
+
+@media (min-width:720px){
+  .list{ grid-template-columns:1fr 1fr; column-gap:40px; }
+  .tier{ grid-column:1 / -1; }
+}
+
+/* ---------- Barra fixa "ver pedido" ------------------------------------- */
+.bar{
+  position:fixed; left:0; right:0; bottom:0; z-index:35;
+  display:flex; justify-content:center;
+  padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+  background:linear-gradient(to top, var(--carvao) 60%, transparent);
+  transform:translateY(120%); transition:transform .28s cubic-bezier(.2,.8,.2,1);
+}
+.bar.is-on{ transform:translateY(0); }
+.bar__btn{
+  width:100%; max-width:var(--wrap);
+  display:flex; align-items:center; justify-content:space-between; gap:16px;
+  padding:16px 22px; border:0; border-radius:14px;
+  background:var(--brasa); color:#fff; font-weight:600; font-size:16px;
+  box-shadow:0 16px 40px -12px rgba(226,78,27,.6);
+}
+.bar__btn:hover{ background:var(--brasa-2); }
+.bar__price{ font-family:var(--fonte-ticket); }
+
+/* ---------- Rodapé ------------------------------------------------------- */
+.foot{
+  max-width:var(--wrap); margin:60px auto 120px; padding:0 clamp(16px,4vw,28px);
+  text-align:center; color:var(--fumaca); font-size:13px;
+  font-family:var(--fonte-ticket); line-height:1.9;
+}
+.foot a{ color:var(--dourado); text-decoration:none; }
+.foot a:hover{ text-decoration:underline; }
+
+/* ---------- Diálogos (montar pizza / pedido) --------------------------- */
+dialog{
+  width:100%; max-width:560px;
+  margin:auto auto 0; padding:0;
+  border:0; border-radius:22px 22px 0 0;
+  background:var(--creme); color:var(--tinta);
+  box-shadow:0 -20px 60px -10px rgba(0,0,0,.5);
+}
+@media (min-width:600px){ dialog{ margin:auto; border-radius:22px; } }
+dialog::backdrop{ background:rgba(10,7,5,.62); backdrop-filter:blur(3px); }
+.sheet__scroll{ max-height:min(84vh,760px); overflow-y:auto; padding:0 clamp(18px,5vw,28px) 26px; }
+.sheet__grab{
+  position:sticky; top:0; z-index:5;
+  height:46px; margin:0 calc(-1 * clamp(18px,5vw,28px)) 6px;
+  background:var(--creme); border-radius:22px 22px 0 0;
+}
+.sheet__x{
+  position:absolute; top:6px; right:12px;
+  width:36px; height:36px; border-radius:50%;
+  border:1px solid var(--creme-2); background:#fff8ec;
+  font-size:16px; line-height:1;
+}
+.sheet__head{ margin-bottom:6px; padding-right:40px; }
+.sheet__name{ font-size:26px; color:var(--tinta); }
+.sheet__price{ font-family:var(--fonte-ticket); font-size:15px; margin-top:2px; color:var(--brasa); }
+.sheet__desc{ font-size:14px; color:color-mix(in srgb,var(--tinta) 62%,transparent); margin-top:6px; }
+
+.block{ margin-top:22px; }
+.block__t{
+  font-family:var(--fonte-ticket); font-size:11.5px; letter-spacing:.18em;
+  text-transform:uppercase; color:color-mix(in srgb,var(--tinta) 55%,transparent);
+  margin-bottom:10px;
+}
+.opt{
+  display:flex; align-items:center; gap:11px;
+  padding:11px 12px; margin-bottom:6px;
+  border:1px solid var(--creme-2); border-radius:12px;
+  background:#fff8ec;
+  transition:border-color .12s ease, background .12s ease;
+}
+.opt:has(input:checked){ border-color:var(--brasa); background:color-mix(in srgb,var(--brasa) 9%,#fff8ec); }
+.opt input{ accent-color:var(--brasa); width:18px; height:18px; flex:none; }
+.opt__label{ flex:1; font-size:15px; }
+.opt__meta{ font-family:var(--fonte-ticket); font-size:13px; color:color-mix(in srgb,var(--tinta) 60%,transparent); }
+
+.chips{ display:flex; flex-wrap:wrap; gap:8px; }
+.chip{
+  display:inline-flex; align-items:center; gap:7px;
+  padding:8px 12px; border-radius:999px;
+  border:1px solid var(--creme-2); background:#fff8ec; font-size:14px;
+}
+.chip:has(input:checked){ border-color:var(--brasa); background:color-mix(in srgb,var(--brasa) 12%,#fff8ec); text-decoration:line-through; }
+.chip input{ position:absolute; opacity:0; width:0; height:0; }
+
+select,input[type=text],input[type=tel],input[type=number],textarea{
+  width:100%; padding:12px 13px;
+  border:1px solid var(--creme-2); border-radius:11px;
+  background:#fff8ec; color:var(--tinta); font:inherit;
+}
+textarea{ resize:vertical; min-height:64px; }
+.field{ margin-bottom:12px; }
+.field label{ display:block; font-size:13px; margin-bottom:5px; color:color-mix(in srgb,var(--tinta) 70%,transparent); }
+.row2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.row-n{ display:grid; grid-template-columns:1fr 96px; gap:12px; }
+
+.stepper{ display:flex; align-items:center; gap:14px; }
+.stepper button{
+  width:40px; height:40px; border-radius:50%;
+  border:1px solid var(--tinta); background:transparent; font-size:20px; line-height:1;
+}
+.stepper output{ font-family:var(--fonte-ticket); font-size:18px; min-width:2ch; text-align:center; }
+
+.sheet__cta{
+  display:flex; gap:10px; align-items:center;
+  margin-top:24px;
+}
+.btn{
+  flex:1; padding:15px 18px; border:0; border-radius:13px;
+  background:var(--brasa); color:#fff; font-weight:600; font-size:16px;
+  display:flex; justify-content:space-between; gap:12px;
+}
+.btn:hover{ background:var(--brasa-2); }
+.btn:disabled{ background:#cbb99b; color:#fff; cursor:not-allowed; }
+.btn--ghost{
+  flex:none; background:transparent; color:var(--tinta);
+  border:1px solid var(--tinta); font-weight:500;
+  justify-content:center;
+}
+.btn--wide{ width:100%; }
+.btn__price{ font-family:var(--fonte-ticket); font-weight:500; }
+
+/* Pedido / carrinho */
+.line{
+  display:grid; grid-template-columns:1fr auto;
+  gap:2px 12px; padding:14px 0; border-bottom:1px solid var(--creme-2);
+}
+.line__name{ font-family:var(--fonte-titulo); font-weight:600; font-size:16px; }
+.line__meta{ grid-column:1; font-size:13px; color:color-mix(in srgb,var(--tinta) 62%,transparent); font-family:var(--fonte-ticket); }
+.line__price{ grid-column:2; grid-row:1; font-family:var(--fonte-ticket); font-size:14px; white-space:nowrap; }
+.line__edit{ grid-column:2; font-family:var(--fonte-ticket); font-size:12px; color:var(--brasa); background:0; border:0; padding:0; justify-self:end; }
+.line__q{ font-family:var(--fonte-ticket); }
+.total{
+  display:flex; justify-content:space-between; align-items:baseline;
+  margin-top:16px; padding-top:14px; border-top:2px solid var(--tinta);
+  font-family:var(--fonte-titulo); font-weight:600; font-size:22px;
+}
+.total span:last-child{ font-family:var(--fonte-ticket); }
+.note{
+  margin-top:8px; font-family:var(--fonte-ticket); font-size:11.5px;
+  color:color-mix(in srgb,var(--tinta) 55%,transparent);
+}
+.closed-warn{
+  margin-top:16px; padding:12px 14px; border-radius:11px;
+  background:color-mix(in srgb,var(--fumaca) 22%,#fff8ec);
+  border:1px solid var(--creme-2);
+  font-size:13.5px;
+}
+.empty{ text-align:center; padding:40px 10px; color:color-mix(in srgb,var(--tinta) 55%,transparent); }
+
+hr.soft{ border:0; border-top:1px solid var(--creme-2); margin:22px 0; }
+
+.save-row{ display:flex; align-items:flex-start; gap:9px; margin:6px 0 2px; font-size:13.5px; }
+.save-row input{ accent-color:var(--brasa); width:17px; height:17px; margin-top:2px; }
+
+.msg-box{
+  width:100%; margin-top:12px; font-family:var(--fonte-ticket); font-size:12px;
+  background:#fff8ec;
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{ animation-duration:.001s !important; transition-duration:.001s !important; }
+  .hero__glow{ opacity:.7; }
+}

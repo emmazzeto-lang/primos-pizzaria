@@ -1,0 +1,13 @@
+{
+  "name": "primos-site",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cardápio digital da Pizzaria Primos — o cliente monta o pedido e envia no WhatsApp.",
+  "type": "module",
+  "scripts": {
+    "dev": "npx --yes serve .",
+    "start": "npx --yes serve ."
+  },
+  "keywords": ["cardapio", "pizzaria", "whatsapp", "vanilla-js", "static-site"],
+  "license": "MIT"
+}

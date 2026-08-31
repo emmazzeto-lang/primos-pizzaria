@@ -1,9 +1,10 @@
-/** Repinta o cabeçalho, o hero e a barra fixa conforme o estado. */
+/** Repinta o cabeçalho, o hero, a barra fixa e o aviso de promoção. */
 import { $ } from "./lib/dom.js";
 import { brl } from "./lib/format.js";
 import { CONFIG } from "./config.js";
 import { cartCount, cartTotal } from "./store.js";
 import { lojaStatus } from "./shop-status.js";
+import { promoDoDia } from "./promos.js";
 
 /** Cabeçalho + hero: aberto/fechado; trava o botão de enviar fora do horário. */
 export function paintStatus() {
@@ -15,7 +16,7 @@ export function paintStatus() {
 
   $("#hero").classList.toggle("is-closed", !aberta);
   $("#heroStatus").innerHTML = aberta
-    ? `<b>Aberto agora</b> — fazemos pedidos até ${CONFIG.fechaHora}h`
+    ? `<b>Aberto agora</b> — entrega em ${CONFIG.entregaMin}–${CONFIG.entregaMax} min`
     : `Fechado agora — abrimos <b>${quando}</b>`;
 
   const warn = $("#closedWarn");
@@ -24,6 +25,13 @@ export function paintStatus() {
     warn.textContent =
       `A pizzaria está fechada agora (abrimos ${quando}). Você pode montar o pedido e ` +
       `copiar o texto — o envio pelo botão volta a funcionar no horário de atendimento.`;
+  }
+
+  const promo = promoDoDia();
+  const banner = $("#promoBanner");
+  if (banner) {
+    banner.hidden = !promo;
+    if (promo) banner.textContent = promo.texto;
   }
 
   const send = $("#sendBtn");

@@ -14,7 +14,7 @@
 
 const ABA_PEDIDOS  = 'Pedidos';
 const ABA_RESUMO   = 'Resumo do dia';
-const EMAIL_RESUMO = '';   // e-mail que recebe o resumo à noite. Deixe '' para não enviar.
+const EMAIL_RESUMO = 'silvanapolletiscalisee@gmail.com'; // recebe o resumo à noite. '' para não enviar.
 
 /* ------------------------------------------------------------------ */
 /*  Recebe cada pedido do site                                        */

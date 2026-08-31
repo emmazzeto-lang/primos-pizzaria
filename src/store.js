@@ -44,6 +44,28 @@ export function removeItem(index) {
   persist();
 }
 
+export function setQty(index, qtd) {
+  if (qtd < 1) return removeItem(index);
+  cart[index] = { ...cart[index], qtd };
+  persist();
+}
+
+/** Bebida: se já estiver no carrinho, soma 1; senão adiciona. */
+export function addBebida(bebida) {
+  const i = cart.findIndex((it) => it.tipo === "bebida" && it.id === bebida.id);
+  if (i >= 0) cart[i] = { ...cart[i], qtd: cart[i].qtd + 1 };
+  else
+    cart.push({
+      tipo: "bebida",
+      tipoLabel: "Bebida",
+      id: bebida.id,
+      nome: bebida.nome,
+      qtd: 1,
+      precoUnit: bebida.preco,
+    });
+  persist();
+}
+
 export const cartTotal = () => cart.reduce((s, it) => s + it.precoUnit * it.qtd, 0);
 export const cartCount = () => cart.reduce((s, it) => s + it.qtd, 0);
 

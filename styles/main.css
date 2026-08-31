@@ -368,6 +368,60 @@ hr.soft{ border:0; border-top:1px solid var(--creme-2); margin:22px 0; }
   background:#fff8ec;
 }
 
+/* ---------- Faixa de promoção ----------------------------------------- */
+.promo{
+  text-align:center;
+  padding:10px 16px;
+  font-family:var(--fonte-ticket); font-size:12.5px; letter-spacing:.03em;
+  color:var(--carvao);
+  background:linear-gradient(90deg, var(--dourado), var(--brasa-2));
+}
+.promo[hidden]{ display:none; }
+
+/* ---------- Chips de adicionais (sem risco/strike) ------------------- */
+.pick{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:8px 12px; border-radius:999px;
+  border:1px solid var(--creme-2); background:#fff8ec; font-size:14px;
+}
+.pick:has(input:checked){
+  border-color:var(--brasa);
+  background:color-mix(in srgb,var(--brasa) 14%,#fff8ec);
+  font-weight:600;
+}
+.pick input{ position:absolute; opacity:0; width:0; height:0; }
+.pick::before{ content:"+"; font-family:var(--fonte-ticket); color:var(--brasa); }
+.pick:has(input:checked)::before{ content:"✓"; }
+
+/* ---------- Bebidas -------------------------------------------------- */
+.drink{
+  display:flex; align-items:center; gap:12px;
+  padding:14px 6px; border-bottom:1px solid var(--creme-2);
+}
+.drink__name{ font-family:var(--fonte-titulo); font-weight:600; font-size:17px; flex:1; }
+.drink__price{ font-family:var(--fonte-ticket); font-size:14px; }
+.drink__add{
+  border:1px solid var(--brasa); color:var(--brasa); background:transparent;
+  border-radius:999px; padding:7px 14px; font-size:13px; font-weight:600;
+}
+.drink__add:hover{ background:var(--brasa); color:#fff; }
+
+/* ---------- Linha do pedido: controles ------------------------------ */
+.line__ctrl{
+  grid-column:1 / -1;
+  display:flex; align-items:center; gap:14px;
+  margin-top:8px;
+}
+.line__ctrl .line__edit{ position:static; }
+.line__ctrl .line__edit[data-del]{ margin-left:auto; }
+.stepper--sm{ display:inline-flex; align-items:center; gap:10px; }
+.stepper--sm button{
+  width:28px; height:28px; border-radius:50%;
+  border:1px solid var(--tinta); background:transparent;
+  font-size:16px; line-height:1;
+}
+.stepper--sm output{ font-family:var(--fonte-ticket); font-size:14px; min-width:1.5ch; text-align:center; }
+
 @media (prefers-reduced-motion:reduce){
   *{ animation-duration:.001s !important; transition-duration:.001s !important; }
   .hero__glow{ opacity:.7; }

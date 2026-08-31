@@ -26,12 +26,14 @@
   </div>
 </header>
 
+<div id="promoBanner" class="promo" hidden></div>
+
 <section class="hero" id="hero">
   <div class="hero__glow"></div>
   <div class="hero__inner">
     <img class="hero__logo" src="assets/logo.png" alt="Pizzaria Primos — forno a lenha, desde 2005" width="240" height="223">
     <h1 class="hero__title">Pizza de forno a lenha</h1>
-    <p class="hero__sub">Feita na hora e entregue em toda a Reginópolis.</p>
+    <p class="hero__sub">Feita na hora, entregue na área urbana de Reginópolis — ou retire no balcão.</p>
     <p class="hero__status" id="heroStatus">Carregando horário…</p>
   </div>
 </section>
@@ -55,9 +57,10 @@
 </div>
 
 <footer class="foot">
-  <div>Pizzaria Primos · Reginópolis-SP · quinta a sábado, 19h–22h</div>
+  <div>Pizzaria Primos · quinta a sábado, 19h–22h</div>
+  <div>Antônio da Cruz Neto, 274 — Jardim Primavera · Reginópolis-SP</div>
   <div>WhatsApp <a id="footWa" href="#">(14) 99782-4261</a> · Instagram <a id="footIg" href="#" target="_blank" rel="noopener">@primosprizzaria._</a></div>
-  <div>Apenas entrega · sem taxa em toda a cidade</div>
+  <div>Entrega sem taxa na área urbana (20–40 min) · também dá pra retirar no balcão</div>
 </footer>
 
 
@@ -78,8 +81,11 @@
 
     <form id="checkout" novalidate>
       <hr class="soft">
-      <div class="block__t">Entrega — Reginópolis-SP</div>
-      <div class="field">
+      <div class="block__t">Como você quer receber</div>
+      <label class="opt"><input type="radio" name="entrega" value="entrega" checked><span class="opt__label">Entrega</span><span class="opt__meta">área urbana · 20–40 min</span></label>
+      <label class="opt"><input type="radio" name="entrega" value="retirada"><span class="opt__label">Retirar no balcão</span></label>
+
+      <div class="field" style="margin-top:16px">
         <label for="f-nome">Nome</label>
         <input type="text" id="f-nome" name="nome" autocomplete="name" required>
       </div>
@@ -87,29 +93,36 @@
         <label for="f-tel">WhatsApp / telefone</label>
         <input type="tel" id="f-tel" name="telefone" autocomplete="tel" inputmode="tel" placeholder="(14) 9....." required>
       </div>
-      <div class="row-n">
-        <div class="field">
-          <label for="f-rua">Rua</label>
-          <input type="text" id="f-rua" name="rua" autocomplete="address-line1" required>
+
+      <div id="enderecoBlock">
+        <div class="row-n">
+          <div class="field">
+            <label for="f-rua">Rua</label>
+            <input type="text" id="f-rua" name="rua" autocomplete="address-line1">
+          </div>
+          <div class="field">
+            <label for="f-num">Número</label>
+            <input type="text" id="f-num" name="numero" inputmode="numeric">
+          </div>
         </div>
         <div class="field">
-          <label for="f-num">Número</label>
-          <input type="text" id="f-num" name="numero" inputmode="numeric" required>
+          <label for="f-bairro">Bairro</label>
+          <input type="text" id="f-bairro" name="bairro" autocomplete="address-level3">
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="f-compl">Complemento</label>
+            <input type="text" id="f-compl" name="complemento" placeholder="casa, fundos, apto…">
+          </div>
+          <div class="field">
+            <label for="f-ref">Ponto de referência</label>
+            <input type="text" id="f-ref" name="referencia" placeholder="perto de…">
+          </div>
         </div>
       </div>
-      <div class="field">
-        <label for="f-bairro">Bairro</label>
-        <input type="text" id="f-bairro" name="bairro" autocomplete="address-level3" required>
-      </div>
-      <div class="row2">
-        <div class="field">
-          <label for="f-compl">Complemento</label>
-          <input type="text" id="f-compl" name="complemento" placeholder="casa, fundos, apto…">
-        </div>
-        <div class="field">
-          <label for="f-ref">Ponto de referência</label>
-          <input type="text" id="f-ref" name="referencia" placeholder="perto de…">
-        </div>
+
+      <div id="retiradaInfo" class="closed-warn" hidden>
+        Retirada na pizzaria: <b>Antônio da Cruz Neto, 274 — Jardim Primavera</b>, Reginópolis-SP.
       </div>
 
       <div class="block__t" style="margin-top:18px">Pagamento</div>

@@ -1,42 +1,55 @@
 /**
- * Diálogo "montar a pizza": sabor único ou meio a meio, tirar ingredientes,
- * borda recheada, observação e quantidade. No fim, adiciona/atualiza o carrinho.
+ * Diálogo "montar a pizza".
+ *   - pizza:   tamanho (broto / grande), meio a meio (só grande salgada),
+ *              borda recheada (só grande), tirar ingredientes, adicionais.
+ *   - calzone: escolhe o sabor, tirar ingredientes, adicionais.
+ * No fim, adiciona/atualiza o carrinho.
  */
 import { $, $$ } from "./lib/dom.js";
 import { brl, brlS, cap } from "./lib/format.js";
-import { PIZZAS, ACOMPANHA, BORDA, MINI, CALZONE } from "./menu-data.js";
+import {
+  PIZZAS,
+  ACOMPANHA,
+  BORDA,
+  CALZONE,
+  BROTO_PRECO,
+  ADICIONAIS,
+} from "./menu-data.js";
 import { pizzaById, addItem, replaceItem } from "./store.js";
+import { precoComPromo } from "./promos.js";
 
 const sheet = $("#sheet");
-const TIPO_LABEL = { grande: "Pizza grande", mini: "Mini pizza", calzone: "Calzone" };
 
-const chipsHTML = (list) =>
+const chipsHTML = (list, cls) =>
   list
-    .map((i) => `<label class="chip"><input type="checkbox" value="${i}">${i}</label>`)
+    .map(
+      (i) =>
+        `<label class="${cls}"><input type="checkbox" value="${i}">${i}</label>`
+    )
     .join("");
 
 /**
- * @param {"grande"|"mini"|"calzone"} tipo
- * @param {string|null} id  sabor fixo (grande) ou null (mini/calzone escolhem no diálogo)
- * @param {object|null} preload  item do carrinho sendo editado (traz _i = índice)
+ * @param {"pizza"|"calzone"} tipo
+ * @param {string|null} id  sabor da pizza (fixo). Calzone escolhe no diálogo.
+ * @param {object|null} preload  item do carrinho em edição (traz _i = índice)
  */
 export function openBuilder(tipo, id, preload = null) {
-  const grande = tipo === "grande";
-  const pizza = grande ? pizzaById(id) : null;
-  const precoBase =
-    tipo === "mini" ? MINI.preco : tipo === "calzone" ? CALZONE.preco : pizza.preco;
-  const titulo = grande ? pizza.nome : tipo === "mini" ? MINI.nome : CALZONE.nome;
+  const isPizza = tipo === "pizza";
+  const pizza = isPizza ? pizzaById(id) : null;
+  const salgada = isPizza && !pizza.doce;
 
   const html = [];
 
   html.push(
-    `<div class="sheet__head"><h2 class="sheet__name">${titulo}</h2>` +
+    `<div class="sheet__head">` +
+      `<h2 class="sheet__name">${isPizza ? pizza.nome : CALZONE.nome}</h2>` +
       `<div class="sheet__price" id="shPrice"></div>` +
-      (grande ? `<p class="sheet__desc">${cap(pizza.ing.join(", "))}</p>` : "") +
+      (isPizza ? `<p class="sheet__desc">${cap(pizza.ing.join(", "))}</p>` : "") +
       `</div>`
   );
 
-  if (!grande) {
+  // ----- calzone: escolher sabor
+  if (!isPizza) {
     html.push(
       `<div class="block"><div class="block__t">Sabor</div><select id="shSabor">` +
         PIZZAS.map((x) => `<option value="${x.id}">${x.nome}</option>`).join("") +
@@ -44,32 +57,39 @@ export function openBuilder(tipo, id, preload = null) {
     );
   }
 
-  if (grande) {
+  // ----- pizza: tamanho
+  if (isPizza) {
     html.push(
-      `<div class="block"><div class="block__t">Tamanho do sabor</div>` +
+      `<div class="block"><div class="block__t">Tamanho</div>` +
+        `<label class="opt"><input type="radio" name="tam" value="grande" checked>` +
+        `<span class="opt__label">Grande</span>` +
+        `<span class="opt__meta">${brlS(precoComPromo(id, "grande", pizza.preco))}</span></label>` +
+        `<label class="opt"><input type="radio" name="tam" value="broto">` +
+        `<span class="opt__label">Broto</span><span class="opt__meta">${brlS(BROTO_PRECO)}</span></label>` +
+        `</div>`
+    );
+  }
+
+  // ----- meio a meio (só pizza grande salgada)
+  if (salgada) {
+    html.push(
+      `<div class="block" id="mmBlock"><div class="block__t">Sabor único ou meio a meio</div>` +
         `<label class="opt"><input type="radio" name="mm" value="inteira" checked>` +
         `<span class="opt__label">Sabor único</span></label>` +
         `<label class="opt"><input type="radio" name="mm" value="meio">` +
         `<span class="opt__label">Meio a meio</span><span class="opt__meta">vale o mais caro</span></label>` +
         `<div id="mmWrap" hidden style="margin-top:8px"><select id="shSabor2">` +
-        PIZZAS.filter((x) => x.id !== id)
+        PIZZAS.filter((x) => !x.doce && x.id !== id)
           .map((x) => `<option value="${x.id}">${x.nome} — ${brlS(x.preco)}</option>`)
           .join("") +
         `</select></div></div>`
     );
   }
 
-  const ingredientes = grande ? [...pizza.ing, ...ACOMPANHA] : [...ACOMPANHA];
-  html.push(
-    `<div class="block"><div class="block__t">Tirar algo? ` +
-      `<span style="text-transform:none;letter-spacing:0">(opcional)</span></div>` +
-      `<div class="chips" id="shTirar">${chipsHTML(ingredientes)}</div>` +
-      `<p class="note" id="tirarNote" style="margin-top:8px"></p></div>`
-  );
-
-  if (grande) {
+  // ----- borda (só pizza grande)
+  if (isPizza) {
     html.push(
-      `<div class="block"><div class="block__t">Borda recheada</div>` +
+      `<div class="block" id="bdBlock"><div class="block__t">Borda recheada</div>` +
         `<label class="opt"><input type="radio" name="bd" value="" checked>` +
         `<span class="opt__label">Sem borda recheada</span></label>` +
         BORDA.opcoes
@@ -83,11 +103,30 @@ export function openBuilder(tipo, id, preload = null) {
     );
   }
 
+  // ----- tirar ingredientes
+  const ingIniciais = isPizza ? [...pizza.ing, ...ACOMPANHA] : [...ACOMPANHA];
+  html.push(
+    `<div class="block"><div class="block__t">Tirar algo? ` +
+      `<span style="text-transform:none;letter-spacing:0">(opcional)</span></div>` +
+      `<div class="chips" id="shTirar">${chipsHTML(ingIniciais, "chip")}</div>` +
+      `<p class="note" id="tirarNote" style="margin-top:8px"></p></div>`
+  );
+
+  // ----- adicionais
+  html.push(
+    `<div class="block"><div class="block__t">Adicionais ` +
+      `<span style="text-transform:none;letter-spacing:0">(+ ${brlS(ADICIONAIS.preco)} cada)</span></div>` +
+      `<div class="chips" id="shAdd">${chipsHTML(ADICIONAIS.opcoes, "pick")}</div>` +
+      `<p class="note" id="addNote" style="margin-top:8px"></p></div>`
+  );
+
+  // ----- observação
   html.push(
     `<div class="block"><div class="block__t">Observação</div>` +
       `<textarea id="shObs" placeholder="ex.: bem assada, cortada em 8 pedaços…"></textarea></div>`
   );
 
+  // ----- quantidade + adicionar
   html.push(
     `<div class="sheet__cta">` +
       `<div class="stepper">` +
@@ -101,39 +140,85 @@ export function openBuilder(tipo, id, preload = null) {
 
   $("#sheetBody").innerHTML = html.join("");
 
-  /* ---------- leitura do formulário ---------- */
+  /* ---------------- leitura do formulário ---------------- */
   let qtd = preload?.qtd || 1;
 
-  const chosenId = () => (grande ? id : $("#shSabor").value);
+  const saborId = () => (isPizza ? id : $("#shSabor").value);
+  const tamanho = () =>
+    isPizza ? sheet.querySelector("input[name=tam]:checked").value : null;
+  const isGrande = () => isPizza && tamanho() === "grande";
   const isHalf = () =>
-    grande && sheet.querySelector('input[name=mm]:checked').value === "meio";
+    salgada && isGrande() && sheet.querySelector("input[name=mm]:checked").value === "meio";
   const secondId = () => $("#shSabor2")?.value;
   const bordaValue = () =>
-    grande ? sheet.querySelector('input[name=bd]:checked').value : "";
+    isGrande() ? sheet.querySelector("input[name=bd]:checked").value : "";
   const removed = () => $$("#shTirar input:checked").map((i) => i.value);
+  const extras = () => $$("#shAdd input:checked").map((i) => i.value);
+
+  function precoBase() {
+    if (!isPizza) return CALZONE.preco;
+    if (tamanho() === "broto") return BROTO_PRECO;
+    if (isHalf()) {
+      return Math.max(
+        pizzaById(saborId()).preco,
+        pizzaById(secondId()).preco
+      );
+    }
+    return precoComPromo(saborId(), "grande", pizzaById(saborId()).preco);
+  }
+
+  function usouPromo() {
+    return (
+      isPizza &&
+      tamanho() === "grande" &&
+      !isHalf() &&
+      precoComPromo(saborId(), "grande", pizzaById(saborId()).preco) <
+        pizzaById(saborId()).preco
+    );
+  }
 
   function unitPrice() {
-    let unit = grande ? pizzaById(chosenId()).preco : precoBase;
-    if (isHalf()) {
-      unit = Math.max(pizzaById(chosenId()).preco, pizzaById(secondId()).preco);
-    }
+    let unit = precoBase();
     if (bordaValue()) unit += BORDA.preco;
+    unit += extras().length * ADICIONAIS.preco;
     return unit;
   }
 
   function refresh() {
+    // mostra/esconde meio a meio e borda conforme o tamanho
+    if (isPizza) {
+      const broto = tamanho() === "broto";
+      if ($("#mmBlock")) $("#mmBlock").hidden = broto;
+      if ($("#bdBlock")) $("#bdBlock").hidden = broto;
+      if (broto) {
+        const mm = sheet.querySelector("input[name=mm][value=inteira]");
+        if (mm) mm.checked = true;
+        if ($("#mmWrap")) $("#mmWrap").hidden = true;
+      }
+    }
     const unit = unitPrice();
     $("#shPrice").textContent =
-      brl(unit) + (qtd > 1 ? ` · ${qtd}× = ${brl(unit * qtd)}` : "");
+      brl(unit) +
+      (qtd > 1 ? ` · ${qtd}× = ${brl(unit * qtd)}` : "") +
+      (usouPromo() ? "  · promo" : "");
     $("#addPrice").textContent = brl(unit * qtd);
+
     const r = removed();
     $("#tirarNote").textContent = r.length ? "sem " + r.join(", ") : "";
+    const a = extras();
+    $("#addNote").textContent = a.length
+      ? `com ${a.join(", ")}  (+ ${brl(a.length * ADICIONAIS.preco)})`
+      : "";
   }
 
-  const bindRemoved = () =>
-    $$("#shTirar input").forEach((i) => i.addEventListener("change", refresh));
+  const bind = (sel, ev = "change") =>
+    $$(sel).forEach((el) => el.addEventListener(ev, refresh));
 
-  sheet.querySelectorAll('input[name=mm]').forEach((r) =>
+  bind("input[name=tam]");
+  bind("input[name=bd]");
+  bind("#shTirar input");
+  bind("#shAdd input");
+  sheet.querySelectorAll("input[name=mm]").forEach((r) =>
     r.addEventListener("change", (e) => {
       $("#mmWrap").hidden = e.target.value !== "meio";
       refresh();
@@ -141,17 +226,13 @@ export function openBuilder(tipo, id, preload = null) {
   );
   $("#shSabor2")?.addEventListener("change", refresh);
   $("#shSabor")?.addEventListener("change", () => {
-    $("#shTirar").innerHTML = chipsHTML([
-      ...pizzaById($("#shSabor").value).ing,
-      ...ACOMPANHA,
-    ]);
-    bindRemoved();
+    $("#shTirar").innerHTML = chipsHTML(
+      [...pizzaById($("#shSabor").value).ing, ...ACOMPANHA],
+      "chip"
+    );
+    bind("#shTirar input");
     refresh();
   });
-  sheet.querySelectorAll('input[name=bd]').forEach((r) =>
-    r.addEventListener("change", refresh)
-  );
-  bindRemoved();
   $("#qMinus").addEventListener("click", () => {
     qtd = Math.max(1, qtd - 1);
     $("#qVal").textContent = qtd;
@@ -163,21 +244,31 @@ export function openBuilder(tipo, id, preload = null) {
     refresh();
   });
 
-  /* ---------- edição: pré-preenche os campos ---------- */
+  /* ---------------- edição: pré-preenche ---------------- */
   if (preload) {
-    if (!grande) $("#shSabor").value = preload.id;
-    $("#qVal").textContent = qtd;
-    if (grande && preload.meio) {
-      sheet.querySelector('input[name=mm][value=meio]').checked = true;
-      $("#mmWrap").hidden = false;
-      $("#shSabor2").value = preload.meio.id;
+    if (!isPizza) $("#shSabor").value = preload.id;
+    if (isPizza && preload.tamanho === "broto") {
+      sheet.querySelector("input[name=tam][value=broto]").checked = true;
     }
-    if (grande && preload.borda) {
+    $("#qVal").textContent = qtd;
+    if (salgada && preload.meio) {
+      const mm = sheet.querySelector("input[name=mm][value=meio]");
+      if (mm) {
+        mm.checked = true;
+        $("#mmWrap").hidden = false;
+        $("#shSabor2").value = preload.meio.id;
+      }
+    }
+    if (isPizza && preload.borda) {
       const r = sheet.querySelector(`input[name=bd][value="${preload.borda.nome}"]`);
       if (r) r.checked = true;
     }
-    preload.tirar.forEach((t) => {
+    (preload.tirar || []).forEach((t) => {
       const box = $$("#shTirar input").find((i) => i.value === t);
+      if (box) box.checked = true;
+    });
+    (preload.adicionais || []).forEach((a) => {
+      const box = $$("#shAdd input").find((i) => i.value === a);
       if (box) box.checked = true;
     });
     $("#shObs").value = preload.obs || "";
@@ -187,18 +278,28 @@ export function openBuilder(tipo, id, preload = null) {
   refresh();
 
   $("#addBtn").addEventListener("click", () => {
-    const sid = chosenId();
+    const sid = saborId();
+    const tam = tamanho();
     const item = {
       tipo,
-      tipoLabel: TIPO_LABEL[tipo],
+      tipoLabel: !isPizza
+        ? "Calzone"
+        : tam === "broto"
+          ? "Pizza broto"
+          : "Pizza grande",
       id: sid,
       nome: pizzaById(sid).nome,
       qtd,
       precoUnit: unitPrice(),
-      meio: isHalf() ? { id: secondId(), nome: pizzaById(secondId()).nome } : null,
+      tamanho: tam,
+      meio: isHalf()
+        ? { id: secondId(), nome: pizzaById(secondId()).nome }
+        : null,
       tirar: removed(),
       borda: bordaValue() ? { nome: bordaValue(), preco: BORDA.preco } : null,
+      adicionais: extras(),
       obs: $("#shObs").value.trim(),
+      promo: usouPromo() || undefined,
     };
     if (preload) replaceItem(preload._i, item);
     else addItem(item);

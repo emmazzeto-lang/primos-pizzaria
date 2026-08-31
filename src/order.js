@@ -1,6 +1,6 @@
 /**
- * Diálogo do pedido: lista os itens, formulário de entrega/pagamento e,
- * no fim, abre o WhatsApp com a mensagem pronta.
+ * Diálogo do pedido: lista os itens, formulário de entrega/retirada e
+ * pagamento e, no fim, abre o WhatsApp com a mensagem pronta.
  */
 import { $, $$ } from "./lib/dom.js";
 import { brl } from "./lib/format.js";
@@ -9,6 +9,7 @@ import {
   cart,
   cartTotal,
   removeItem,
+  setQty,
   loadCliente,
   saveCliente,
   forgetCliente,
@@ -38,20 +39,34 @@ export function renderOrder() {
 
   box.innerHTML =
     cart
-      .map(
-        (it, i) => `
+      .map((it, i) => {
+        const editavel = it.tipo === "pizza" || it.tipo === "calzone";
+        return `
       <div class="line">
-        <div class="line__name">${it.qtd}× ${it.tipoLabel} — ${it.nome}</div>
+        <div class="line__name">${it.tipoLabel} — ${it.nome}</div>
         <div class="line__price">${brl(it.precoUnit * it.qtd)}</div>
         ${resumoLinha(it) ? `<div class="line__meta">${resumoLinha(it)}</div>` : ""}
-        <button type="button" class="line__edit" data-edit="${i}">editar</button>
-        <button type="button" class="line__edit" data-del="${i}" style="margin-left:14px">remover</button>
-      </div>`
-      )
+        <div class="line__ctrl">
+          <span class="stepper stepper--sm">
+            <button type="button" data-dec="${i}" aria-label="Menos um">–</button>
+            <output>${it.qtd}</output>
+            <button type="button" data-inc="${i}" aria-label="Mais um">+</button>
+          </span>
+          ${editavel ? `<button type="button" class="line__edit" data-edit="${i}">editar</button>` : ""}
+          <button type="button" class="line__edit" data-del="${i}">remover</button>
+        </div>
+      </div>`;
+      })
       .join("") +
-    `<div class="total"><span>Total</span><span>${brl(cartTotal())}</span></div>
-     <p class="note">Só as pizzas. Adicionais e bebidas, se quiser, a gente combina no WhatsApp.</p>`;
+    `<div class="total"><span>Total</span><span>${brl(cartTotal())}</span></div>` +
+    `<p class="note">Confirme o valor final na conversa do WhatsApp.</p>`;
 
+  $$("[data-dec]", box).forEach((b) =>
+    b.addEventListener("click", () => setQty(+b.dataset.dec, cart[+b.dataset.dec].qtd - 1))
+  );
+  $$("[data-inc]", box).forEach((b) =>
+    b.addEventListener("click", () => setQty(+b.dataset.inc, cart[+b.dataset.inc].qtd + 1))
+  );
   $$("[data-del]", box).forEach((b) =>
     b.addEventListener("click", () => removeItem(+b.dataset.del))
   );
@@ -60,7 +75,7 @@ export function renderOrder() {
       const i = +b.dataset.edit;
       const it = cart[i];
       dlg.close();
-      openBuilder(it.tipo, it.tipo === "grande" ? it.id : null, { ...it, _i: i });
+      openBuilder(it.tipo, it.tipo === "calzone" ? null : it.id, { ...it, _i: i });
     })
   );
 
@@ -70,14 +85,16 @@ export function renderOrder() {
 function resumoLinha(it) {
   const bits = [];
   if (it.meio) bits.push(`meio a meio c/ ${it.meio.nome}`);
-  if (it.tirar.length) bits.push("sem " + it.tirar.join(", "));
+  if (it.adicionais?.length) bits.push("com " + it.adicionais.join(", "));
+  if (it.tirar?.length) bits.push("sem " + it.tirar.join(", "));
   if (it.borda) bits.push("borda " + it.borda.nome.toLowerCase());
+  if (it.promo) bits.push("promo");
   if (it.obs) bits.push("obs: " + it.obs);
   return bits.join(" · ");
 }
 
 /* ------------------------------------------------------------------ */
-/*  Formulário de entrega                                             */
+/*  Formulário                                                        */
 /* ------------------------------------------------------------------ */
 function prefill(c) {
   const set = (sel, v) => {
@@ -93,10 +110,14 @@ function prefill(c) {
   set("#f-ref", c.referencia);
 }
 
+const modoEntrega = () =>
+  $("#checkout").elements["entrega"]?.value || "entrega";
+
 function collect() {
   const f = $("#checkout");
   const get = (n) => (f.elements[n]?.value || "").trim();
   return {
+    entrega: modoEntrega(),
     nome: get("nome"),
     telefone: get("telefone"),
     rua: get("rua"),
@@ -110,14 +131,18 @@ function collect() {
   };
 }
 
-function missing(d) {
-  const falta = [];
-  if (!cart.length) falta.push("pizza");
-  ["nome", "telefone", "rua", "numero", "bairro"].forEach((k) => {
-    if (!d[k]) falta.push(k);
+/** Liga/desliga o "required" dos campos de endereço conforme entrega/retirada. */
+function syncEnderecoRequired() {
+  const precisa = modoEntrega() === "entrega";
+  ["#f-rua", "#f-num", "#f-bairro"].forEach((sel) => {
+    $(sel).toggleAttribute("required", precisa);
   });
-  if (!d.pagamento) falta.push("pagamento");
-  return falta;
+}
+
+/** Pode enviar? (carrinho + validação nativa do formulário) */
+function podeEnviar() {
+  if (!cart.length) return false;
+  return $("#checkout").reportValidity();
 }
 
 /* ------------------------------------------------------------------ */
@@ -127,20 +152,34 @@ function buildMessage(d) {
   const L = ["*Pizzaria Primos — Pedido*", ""];
 
   cart.forEach((it) => {
+    if (it.tipo === "bebida") {
+      L.push(`${it.qtd}x ${it.nome}`);
+      L.push(`   • ${brl(it.precoUnit)} cada`);
+      return;
+    }
     let head = `${it.qtd}x ${it.tipoLabel} — ${it.nome}`;
     if (it.meio) head += ` / ${it.meio.nome} (meio a meio)`;
     L.push(head);
-    if (it.tirar.length) L.push(`   • sem ${it.tirar.join(", ")}`);
+    if (it.adicionais?.length) L.push(`   • com ${it.adicionais.join(", ")}`);
     if (it.borda) L.push(`   • borda ${it.borda.nome}`);
+    if (it.tirar?.length) L.push(`   • sem ${it.tirar.join(", ")}`);
+    if (it.promo) L.push(`   • promoção do dia`);
     if (it.obs) L.push(`   • obs: ${it.obs}`);
     L.push(`   • ${brl(it.precoUnit)} cada`);
   });
 
-  L.push("", `*Total (pizzas): ${brl(cartTotal())}*`, "");
-  L.push("*Entrega*", d.nome, `${d.rua}, ${d.numero} — ${d.bairro}`);
-  if (d.complemento) L.push(`Compl.: ${d.complemento}`);
-  if (d.referencia) L.push(`Ref.: ${d.referencia}`);
-  L.push(`Tel.: ${d.telefone}`, CONFIG.cidade, "");
+  L.push("", `*Total: ${brl(cartTotal())}*`, "");
+
+  if (d.entrega === "retirada") {
+    L.push("*Retirada no balcão*", CONFIG.endereco, `${CONFIG.cidade}`, "");
+  } else {
+    L.push("*Entrega*", d.nome, `${d.rua}, ${d.numero} — ${d.bairro}`);
+    if (d.complemento) L.push(`Compl.: ${d.complemento}`);
+    if (d.referencia) L.push(`Ref.: ${d.referencia}`);
+    L.push(CONFIG.cidade, "");
+  }
+  if (d.entrega === "retirada") L.push(`Nome: ${d.nome}`);
+  L.push(`Tel.: ${d.telefone}`, "");
 
   let pg = `*Pagamento:* ${d.pagamento}`;
   if (d.pagamento === "Dinheiro") {
@@ -161,15 +200,18 @@ function logForStock(d) {
 
   const payload = {
     ts: new Date().toISOString(),
-    bairro: d.bairro,
+    entrega: d.entrega,
+    bairro: d.entrega === "entrega" ? d.bairro : "",
     pagamento: d.pagamento,
     total: cartTotal(),
     itens: cart.map((it) => ({
       tipo: it.tipo,
       sabor: it.nome,
+      tamanho: it.tamanho || null,
       meio: it.meio?.nome || null,
       qtd: it.qtd,
-      tirar: it.tirar,
+      tirar: it.tirar || [],
+      adicionais: it.adicionais || [],
       borda: it.borda?.nome || null,
       preco: it.precoUnit,
     })),
@@ -191,6 +233,16 @@ function logForStock(d) {
 /*  Ligações do formulário — chamado uma vez no início                */
 /* ------------------------------------------------------------------ */
 export function initOrder() {
+  $$('input[name=entrega]').forEach((r) =>
+    r.addEventListener("change", () => {
+      const retirada = modoEntrega() === "retirada";
+      $("#enderecoBlock").hidden = retirada;
+      $("#retiradaInfo").hidden = !retirada;
+      syncEnderecoRequired();
+    })
+  );
+  syncEnderecoRequired();
+
   $$('input[name=pagamento]').forEach((r) =>
     r.addEventListener("change", (e) => {
       $("#trocoWrap").hidden = e.target.value !== "Dinheiro";
@@ -202,13 +254,10 @@ export function initOrder() {
 
   $("#checkout").addEventListener("submit", (e) => {
     e.preventDefault();
-    const d = collect();
-    if (missing(d).length) {
-      $("#checkout").reportValidity();
-      return;
-    }
+    if (!podeEnviar()) return;
     if (!lojaStatus().aberta) return; // botão já fica desabilitado; trava dupla
 
+    const d = collect();
     $("#f-save").checked ? saveCliente(d) : forgetCliente();
     logForStock(d);
 
@@ -219,11 +268,8 @@ export function initOrder() {
   });
 
   $("#copyBtn").addEventListener("click", async () => {
+    if (!podeEnviar()) return;
     const d = collect();
-    if (missing(d).length) {
-      $("#checkout").reportValidity();
-      return;
-    }
     const msg = buildMessage(d);
     const box = $("#msgBox");
     box.hidden = false;

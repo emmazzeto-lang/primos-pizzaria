@@ -18,10 +18,15 @@ confirmação acontece na conversa.
 
 ## Funcionalidades
 
-- **Cardápio** gerado a partir de um único arquivo de dados, agrupado por faixa de preço.
-- **Montar a pizza:** sabor único ou **meio a meio** (cobra o sabor mais caro),
-  **tirar ingredientes**, **borda recheada**, observação e quantidade.
-- **Mini pizza** e **calzone** em qualquer sabor.
+- **Cardápio** gerado a partir de um arquivo de dados: salgadas por faixa de preço,
+  doces, calzone e bebidas.
+- **Montar a pizza:** tamanho **broto ou grande**, sabor único ou **meio a meio**
+  (só salgadas, cobra o mais caro), **borda recheada** (só grande), **adicionais**,
+  **tirar ingredientes**, observação e quantidade.
+- **Calzone** e **bebidas** entram no mesmo carrinho.
+- **Entrega ou retirada no balcão** — o formulário e a mensagem se ajustam.
+- **Promoção por dia da semana** (ex.: calabresa de quinta) — faixa no topo e preço
+  automático no montador.
 - **Pedido no WhatsApp:** a mensagem é montada e aberta via link `wa.me`, com
   botão "Copiar pedido em texto" como alternativa.
 - **Dados salvos no aparelho:** nome, telefone e endereço voltam preenchidos na
@@ -59,8 +64,9 @@ primos-site/
 │   ├── builder.js         # diálogo "montar a pizza"
 │   ├── order.js           # diálogo do pedido + mensagem do WhatsApp
 │   ├── store.js           # carrinho e dados do cliente
-│   ├── ui.js              # repinta cabeçalho / hero / barra fixa
+│   ├── ui.js              # repinta cabeçalho / hero / barra / promoção
 │   ├── shop-status.js     # aberto ou fechado agora
+│   ├── promos.js          # promoções por dia da semana
 │   └── lib/
 │       ├── dom.js         # atalhos $ e $$
 │       ├── format.js      # formatação de dinheiro/texto

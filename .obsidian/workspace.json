@@ -1,0 +1,209 @@
+{
+  "main": {
+    "id": "47ce57da55e6f0c4",
+    "type": "split",
+    "children": [
+      {
+        "id": "7625faf099811778",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "55d7c5683adcb1ec",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "graphify-out/GRAPH_REPORT.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "GRAPH_REPORT"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "8be42d43ad87fb94",
+    "type": "split",
+    "children": [
+      {
+        "id": "e78fd775eef0f421",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "05e4a3edbe39f036",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Explorador de arquivos"
+            }
+          },
+          {
+            "id": "68bd679f3062a7a7",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Procurar"
+            }
+          },
+          {
+            "id": "a78934163538810a",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-bookmark",
+              "title": "Marcadores"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "fdb1ab76c6b45632",
+    "type": "split",
+    "children": [
+      {
+        "id": "d0f01cd43891df4f",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "65efc6e3a23161ea",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "graphify-out/GRAPH_REPORT.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Links inversos"
+            }
+          },
+          {
+            "id": "d0899dec2b67adfb",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "graphify-out/GRAPH_REPORT.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Links de saída"
+            }
+          },
+          {
+            "id": "5b2565bb366a4b41",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Etiquetas"
+            }
+          },
+          {
+            "id": "b33bab230d5a4ab0",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "Todas as propriedades"
+            }
+          },
+          {
+            "id": "ad7f0b2bbe0bf417",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "graphify-out/GRAPH_REPORT.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Sumário"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Abrir a troca rápida": false,
+      "graph:Abrir visualização em gráfico": false,
+      "canvas:Criar novo canvas": false,
+      "daily-notes:Abrir a nota de hoje": false,
+      "templates:Inserir modelo": false,
+      "command-palette:Abrir paleta de comandos": false,
+      "bases:Criar nova base": false
+    }
+  },
+  "active": "55d7c5683adcb1ec",
+  "lastOpenFiles": [
+    "README.md",
+    "graphify-out/graph.html",
+    "graphify-out/manifest.json",
+    "graphify-out/GRAPH_REPORT.md",
+    "graphify-out/graph.json",
+    "graphify-out/cache/ast/v0.9.53-s2/6cb8975310156cc09b33e19139ba81439a813628eb2c198b2c8295c70622e0b4.json",
+    "graphify-out/cache/ast/v0.9.53-s2/b2f2badb84c210251fef3913c8b8849c5b302ec721638baa123f2684e00a9b10.json",
+    "graphify-out/cache/ast/v0.9.53-s2/3612256e7473a2e5f67ef4778d4edeefb44794ef22bac5529bee9c87dc5d8f3d.json",
+    "graphify-out/cache/ast/v0.9.53-s2/31cb4159b7010f12f58e9092428846ce14346957551a5107bf41a29fcd66a3cf.json",
+    "graphify-out/cache/ast/v0.9.53-s2",
+    "graphify-out/cache/ast",
+    "CLAUDE.md",
+    "graphify-out/cache/stat-index.json",
+    "assets/logo.png",
+    "apps-script/README.md"
+  ]
+}

@@ -1,0 +1,142 @@
+/* ============================================================================
+   Painel da pizzaria — mesma linguagem do site: brasa no escuro, papel creme.
+   (Os tokens abaixo repetem os de main.css de propósito: o painel não carrega o
+   CSS do cardápio.)
+   ========================================================================== */
+:root{
+  --carvao:#171310; --brasa:#e24e1b; --brasa-2:#ff6a33; --dourado:#e9a23b;
+  --creme:#f3e7d3; --creme-2:#e7d7bd; --papel:#fff8ec; --fumaca:#b7a99a; --tinta:#2a211a;
+  --erro:#b3261e;
+  --fonte-titulo:"Fraunces",Georgia,serif;
+  --fonte-texto:"Hanken Grotesk","Segoe UI",system-ui,sans-serif;
+  --fonte-ticket:"DM Mono",ui-monospace,Consolas,monospace;
+}
+*,*::before,*::after{ box-sizing:border-box; }
+body{
+  margin:0; background:var(--carvao); color:var(--creme);
+  font:16px/1.5 var(--fonte-texto); -webkit-font-smoothing:antialiased;
+}
+#app{ padding-bottom:96px; }
+h1,h2,h3{ font-family:var(--fonte-titulo); font-weight:600; line-height:1.1; margin:0; }
+a{ color:var(--dourado); }
+button{ font:inherit; color:inherit; cursor:pointer; }
+:focus-visible{ outline:2px solid var(--brasa-2); outline-offset:3px; border-radius:4px; }
+[hidden]{ display:none !important; }
+.sr{ position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
+.muted{ color:color-mix(in srgb,var(--tinta) 62%,transparent); font-size:14px; margin:0; }
+
+/* ---------- Login ---------- */
+.login{ min-height:100vh; display:grid; place-items:center; padding:24px 16px; }
+.login__card{ width:100%; max-width:380px; display:grid; gap:14px; text-align:center; }
+.login__logo{ margin:0 auto; width:104px; height:auto; }
+.login .field{ text-align:left; }
+
+/* ---------- Cartões e campos ---------- */
+.card,.bloco{
+  background:var(--creme); color:var(--tinta); border-radius:18px; padding:20px;
+}
+.field{ display:grid; gap:5px; }
+.field > label,.rotulo{ font-size:13px; color:color-mix(in srgb,var(--tinta) 70%,transparent); }
+input[type=text],input[type=password],input[type=date],input[type=time],select{
+  width:100%; padding:11px 12px; font:inherit; color:var(--tinta);
+  background:var(--papel); border:1px solid var(--creme-2); border-radius:11px;
+}
+input[aria-invalid=true]{ border-color:var(--erro); }
+.erro{ color:var(--erro); font-size:14px; margin:0; }
+.btn{
+  padding:13px 18px; border:0; border-radius:12px; font-weight:600;
+  background:var(--brasa); color:#fff;
+}
+.btn:hover{ background:var(--brasa-2); }
+.btn:disabled{ background:#cbb99b; cursor:not-allowed; }
+.btn--ghost{ background:transparent; color:var(--tinta); border:1px solid var(--tinta); }
+.btn--ghost:hover{ background:color-mix(in srgb,var(--tinta) 8%,transparent); }
+.link{ background:none; border:0; padding:0; color:var(--dourado); text-decoration:underline; }
+
+/* ---------- Topo e abas ---------- */
+.top{
+  position:sticky; top:0; z-index:20; display:flex; align-items:center; justify-content:space-between;
+  padding:10px 16px; background:color-mix(in srgb,var(--carvao) 88%,transparent);
+  backdrop-filter:blur(8px); border-bottom:1px solid color-mix(in srgb,var(--creme) 10%,transparent);
+}
+.brand{ display:flex; align-items:center; gap:9px; font-family:var(--fonte-titulo); font-weight:700; font-size:19px; }
+.top__links{ display:flex; gap:16px; align-items:center; font-size:14px; }
+.wrap{ max-width:720px; margin:0 auto; padding:16px; display:grid; gap:14px; }
+.tabs{ display:flex; flex-wrap:wrap; gap:8px; }
+.tab{
+  padding:9px 16px; border-radius:999px; background:transparent;
+  border:1px solid color-mix(in srgb,var(--creme) 25%,transparent); color:var(--creme);
+}
+.tab[aria-selected=true]{ background:var(--brasa); border-color:var(--brasa); color:#fff; font-weight:600; }
+.panel{ display:grid; gap:14px; }
+
+/* ---------- Blocos ---------- */
+.bloco{ display:grid; gap:14px; }
+.bloco h2{ font-size:22px; }
+.status{
+  display:flex; align-items:center; gap:10px; padding:12px 14px; border-radius:12px;
+  background:var(--papel); border:1px solid var(--creme-2); font-weight:600;
+}
+.status__dot{ width:10px; height:10px; border-radius:50%; background:var(--fumaca); flex:none; }
+.status.on .status__dot{ background:var(--dourado); box-shadow:0 0 0 4px color-mix(in srgb,var(--dourado) 30%,transparent); }
+.opt{
+  display:flex; gap:11px; align-items:flex-start; padding:12px; border:1px solid var(--creme-2);
+  border-radius:12px; background:var(--papel);
+}
+.opt:has(input:checked){ border-color:var(--brasa); background:color-mix(in srgb,var(--brasa) 9%,var(--papel)); }
+.opt input{ accent-color:var(--brasa); width:18px; height:18px; margin-top:2px; flex:none; }
+.opt small{ display:block; color:color-mix(in srgb,var(--tinta) 62%,transparent); }
+.dias{ display:flex; flex-wrap:wrap; gap:8px; }
+.dia{
+  padding:9px 14px; border:1px solid var(--creme-2); border-radius:999px; background:var(--papel);
+  user-select:none;
+}
+.dia:has(input:checked){ background:var(--brasa); border-color:var(--brasa); color:#fff; font-weight:600; }
+.dia input{ position:absolute; opacity:0; width:0; height:0; }
+.dia:has(input:focus-visible){ outline:2px solid var(--brasa-2); outline-offset:2px; }
+.duas{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+/* ---------- Preços ---------- */
+.grupo{ font-family:var(--fonte-ticket); font-size:12px; letter-spacing:.16em; text-transform:uppercase;
+  color:color-mix(in srgb,var(--tinta) 55%,transparent); margin-top:6px; }
+.linha{ display:grid; grid-template-columns:1fr auto 110px; gap:10px; align-items:center;
+  padding:8px 0; border-bottom:1px solid var(--creme-2); }
+.linha__nome{ font-weight:600; }
+.linha__padrao{ font-family:var(--fonte-ticket); font-size:12px; color:color-mix(in srgb,var(--tinta) 55%,transparent); }
+.dinheiro{ display:flex; align-items:center; gap:6px; }
+.dinheiro span{ font-family:var(--fonte-ticket); font-size:13px; }
+.dinheiro input{ text-align:right; font-family:var(--fonte-ticket); }
+.mudou input{ border-color:var(--dourado); background:color-mix(in srgb,var(--dourado) 16%,var(--papel)); }
+
+/* ---------- Promoções e insumos ---------- */
+.carta{ display:grid; gap:12px; padding:14px; border:1px solid var(--creme-2); border-radius:14px; background:var(--papel); }
+.carta .quatro{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+.insumo{ display:grid; grid-template-columns:1fr 84px 110px 36px; gap:8px; align-items:center; }
+.insumo input,.insumo select{ padding:9px 10px; }
+.x{ width:36px; height:36px; border-radius:50%; border:1px solid var(--creme-2); background:var(--papel); }
+.x:hover{ border-color:var(--erro); color:var(--erro); }
+.vazio{ text-align:center; padding:18px 8px; color:color-mix(in srgb,var(--tinta) 55%,transparent); }
+
+/* ---------- Barra de salvar e aviso ---------- */
+.savebar{
+  position:fixed; left:0; right:0; bottom:0; z-index:30; display:flex; gap:14px; align-items:center;
+  justify-content:space-between; padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+  background:linear-gradient(to top,var(--carvao) 70%,transparent);
+}
+.savebar__msg{ font-family:var(--fonte-ticket); font-size:13px; color:var(--fumaca); max-width:60%; }
+.savebar.sujo .savebar__msg{ color:var(--dourado); }
+.toast{
+  position:fixed; left:50%; bottom:84px; transform:translateX(-50%); z-index:40; max-width:min(92vw,480px);
+  padding:12px 18px; border-radius:12px; background:var(--tinta); color:var(--creme);
+  border:1px solid color-mix(in srgb,var(--creme) 20%,transparent); text-align:center;
+}
+.toast.erro{ background:var(--erro); color:#fff; border-color:transparent; }
+
+@media (max-width:520px){
+  .linha{ grid-template-columns:1fr 104px; }
+  .linha__padrao{ grid-column:1; grid-row:2; margin-top:-6px; }
+  .linha .dinheiro{ grid-column:2; grid-row:1 / span 2; }
+  .insumo{ grid-template-columns:1fr 1fr 36px; }
+  .insumo .nome{ grid-column:1 / -1; }
+}
+@media (prefers-reduced-motion:reduce){ *{ transition-duration:.001s !important; animation-duration:.001s !important; } }

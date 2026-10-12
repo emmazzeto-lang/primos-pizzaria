@@ -22,11 +22,17 @@ const EMAIL_RESUMO = 'silvanapolletiscalisee@gmail.com'; // recebe o resumo à n
 function doPost(e) {
   try {
     const dados = JSON.parse(e.postData.contents);
+
+    // Pedidos do painel admin (admin.gs) trazem "action"; pedidos do site não.
+    if (dados && dados.action) return adminPost_(dados);
+
     const ss  = SpreadsheetApp.getActiveSpreadsheet();
     const aba = ss.getSheetByName(ABA_PEDIDOS) || criarAbaPedidos_(ss);
-    const quando = dados.ts ? new Date(dados.ts) : new Date();
+    let quando = dados.ts ? new Date(dados.ts) : new Date();
+    if (isNaN(quando.getTime())) quando = new Date();
 
-    const itensTxt = (dados.itens || []).map(function (it) {
+    const itens = Array.isArray(dados.itens) ? dados.itens.slice(0, 50) : [];
+    const itensTxt = itens.map(function (it) {
       var s = (it.qtd || 1) + 'x ' + rotulo_(it.tipo) + ' ' + it.sabor;
       if (it.meio)  s += ' / ' + it.meio + ' (meio a meio)';
       if (it.borda) s += ' [borda ' + it.borda + ']';
@@ -34,21 +40,24 @@ function doPost(e) {
       return s;
     }).join('  |  ');
 
+    // O corpo chega de um endereço público: qualquer texto é limitado e impedido
+    // de virar fórmula na planilha (celula_ está em admin.gs).
     aba.appendRow([
       quando,
-      dados.bairro || '',
-      dados.pagamento || '',
-      Number(dados.total || 0),
-      itensTxt,
-      JSON.stringify(dados.itens || [])   // coluna técnica — não editar
+      celula_(String(dados.bairro || '').slice(0, 80)),
+      celula_(String(dados.pagamento || '').slice(0, 20)),
+      Number(dados.total) || 0,
+      celula_(itensTxt.slice(0, 2000)),
+      celula_(JSON.stringify(itens).slice(0, 5000))   // coluna técnica — não editar
     ]);
 
     return ContentService
       .createTextOutput(JSON.stringify({ ok: true }))
       .setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
+    console.error(err);
     return ContentService
-      .createTextOutput(JSON.stringify({ ok: false, erro: String(err) }))
+      .createTextOutput(JSON.stringify({ ok: false, erro: 'Não foi possível registrar.' }))
       .setMimeType(ContentService.MimeType.JSON);
   }
 }

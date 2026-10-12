@@ -5,7 +5,6 @@ pelo Instagram, monta a pizza do jeito dele e o pedido sai pronto no WhatsApp da
 pizzaria. **O site não fecha o pedido** — ele só prepara a mensagem; a
 confirmação acontece na conversa.
 
-> **Demonstração:** https://claude.ai/code/artifact/76f27273-3c6f-4048-8a9c-3c8605c9bcd1
 > _(a versão publicada na Vercel entra aqui quando o cardápio de adicionais estiver fechado)_
 
 <p align="center">
@@ -33,6 +32,10 @@ confirmação acontece na conversa.
   próxima visita (`localStorage`).
 - **Aberto / fechado automático:** calculado pelo horário do aparelho; fora do
   expediente o envio fica travado, mas dá para montar e copiar o pedido.
+- **Painel admin (`/admin`):** com senha, a dona abre ou fecha a pizzaria por um
+  período, muda dias e horário, altera preços, cria promoções por dia da semana e
+  cadastra o preço dos insumos — tudo gravado na planilha Google e lido pelo site
+  (ver [`apps-script/`](apps-script/README.md)).
 - **Controle de estoque opcional:** cada pedido enviado pode ser registrado numa
   planilha Google (ver [`apps-script/`](apps-script/README.md)).
 - Acessível: foco de teclado visível, diálogos nativos (`<dialog>`), `prefers-reduced-motion`.
@@ -55,7 +58,8 @@ confirmação acontece na conversa.
 primos-site/
 ├── index.html            # única página; carrega o CSS e o src/main.js
 ├── styles/
-│   └── main.css           # tema completo ("forno a lenha, à noite")
+│   ├── main.css           # tema do cardápio ("forno a lenha, à noite")
+│   └── admin.css          # tema do painel
 ├── src/
 │   ├── main.js            # ponto de entrada: liga os eventos e inicia
 │   ├── config.js          # telefone, Instagram, horário, URL do estoque
@@ -67,14 +71,18 @@ primos-site/
 │   ├── ui.js              # repinta cabeçalho / hero / barra / promoção
 │   ├── shop-status.js     # aberto ou fechado agora
 │   ├── promos.js          # promoções por dia da semana
+│   ├── remote.js          # lê da planilha os ajustes feitos no painel (validados)
+│   ├── price-keys.js      # lista única do que tem preço editável
 │   └── lib/
 │       ├── dom.js         # atalhos $ e $$
 │       ├── format.js      # formatação de dinheiro/texto
 │       └── bus.js         # event bus mínimo ("cart:changed")
+├── admin/                 # painel da dona (página + app.js)
 ├── assets/
 │   └── logo.png
-└── apps-script/           # planilha de estoque (Google Apps Script)
-    ├── estoque.gs
+└── apps-script/           # servidor na planilha Google (Google Apps Script)
+    ├── estoque.gs         # registra pedidos e monta o resumo do dia
+    ├── admin.gs           # API do painel: login, ajustes públicos, gravação
     └── README.md
 ```
 
@@ -104,9 +112,13 @@ Tudo em dois arquivos, sem tocar em lógica:
 - [`src/menu-data.js`](src/menu-data.js) — sabores, preços, ingredientes, borda, mini pizza, calzone.
 - [`src/config.js`](src/config.js) — WhatsApp, Instagram, cidade, dias e horário de funcionamento.
 
-Salve e publique de novo.
+Salve e publique de novo. Esses arquivos guardam os valores **padrão**: quando o
+painel está ativo, o que a dona altera nele vale por cima (e se a planilha ficar
+fora do ar, o site volta a usar estes).
 
-## Controle de estoque (opcional)
+Preços, horário e promoções do dia a dia **não precisam** de código: a dona muda em `/admin`.
+
+## Painel admin e controle de estoque (opcional)
 
 Passo a passo em [`apps-script/README.md`](apps-script/README.md). Resumo: cria-se
 uma planilha Google com o script `apps-script/estoque.gs`, publica-se como "app da

@@ -12,7 +12,7 @@ import {
   ACOMPANHA,
   BORDA,
   CALZONE,
-  BROTO_PRECO,
+  BROTO,
   ADICIONAIS,
 } from "./menu-data.js";
 import { pizzaById, addItem, replaceItem } from "./store.js";
@@ -65,7 +65,7 @@ export function openBuilder(tipo, id, preload = null) {
         `<span class="opt__label">Grande</span>` +
         `<span class="opt__meta">${brlS(precoComPromo(id, "grande", pizza.preco))}</span></label>` +
         `<label class="opt"><input type="radio" name="tam" value="broto">` +
-        `<span class="opt__label">Broto</span><span class="opt__meta">${brlS(BROTO_PRECO)}</span></label>` +
+        `<span class="opt__label">Broto</span><span class="opt__meta">${brlS(precoComPromo(id, "broto", BROTO.preco))}</span></label>` +
         `</div>`
     );
   }
@@ -157,7 +157,7 @@ export function openBuilder(tipo, id, preload = null) {
 
   function precoBase() {
     if (!isPizza) return CALZONE.preco;
-    if (tamanho() === "broto") return BROTO_PRECO;
+    if (tamanho() === "broto") return precoComPromo(saborId(), "broto", BROTO.preco);
     if (isHalf()) {
       return Math.max(
         pizzaById(saborId()).preco,
@@ -168,13 +168,10 @@ export function openBuilder(tipo, id, preload = null) {
   }
 
   function usouPromo() {
-    return (
-      isPizza &&
-      tamanho() === "grande" &&
-      !isHalf() &&
-      precoComPromo(saborId(), "grande", pizzaById(saborId()).preco) <
-        pizzaById(saborId()).preco
-    );
+    if (!isPizza || isHalf()) return false;
+    const t = tamanho();
+    const normal = t === "broto" ? BROTO.preco : pizzaById(saborId()).preco;
+    return precoComPromo(saborId(), t, normal) < normal;
   }
 
   function unitPrice() {

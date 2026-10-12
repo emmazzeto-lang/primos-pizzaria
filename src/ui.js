@@ -1,14 +1,14 @@
 /** Repinta o cabeçalho, o hero, a barra fixa e o aviso de promoção. */
 import { $ } from "./lib/dom.js";
-import { brl } from "./lib/format.js";
+import { brl, fmtHora } from "./lib/format.js";
 import { CONFIG } from "./config.js";
 import { cartCount, cartTotal } from "./store.js";
-import { lojaStatus } from "./shop-status.js";
-import { promoDoDia } from "./promos.js";
+import { lojaStatus, formatDias } from "./shop-status.js";
+import { promosDoDia, promoTexto } from "./promos.js";
 
 /** Cabeçalho + hero: aberto/fechado; trava o botão de enviar fora do horário. */
 export function paintStatus() {
-  const { aberta, quando } = lojaStatus();
+  const { aberta, quando, aviso } = lojaStatus();
 
   const pill = $("#statusPill");
   pill.className = "pill " + (aberta ? "pill--open" : "pill--closed");
@@ -17,21 +17,29 @@ export function paintStatus() {
   $("#hero").classList.toggle("is-closed", !aberta);
   $("#heroStatus").innerHTML = aberta
     ? `<b>Aberto agora</b> — entrega em ${CONFIG.entregaMin}–${CONFIG.entregaMax} min`
-    : `Fechado agora — abrimos <b>${quando}</b>`;
+    : `Fechado agora${quando ? ` — abrimos <b>${quando}</b>` : ""}`;
 
   const warn = $("#closedWarn");
   warn.hidden = aberta;
   if (!aberta) {
     warn.textContent =
-      `A pizzaria está fechada agora (abrimos ${quando}). Você pode montar o pedido e ` +
-      `copiar o texto — o envio pelo botão volta a funcionar no horário de atendimento.`;
+      (aviso ? `${aviso} ` : "") +
+      `A pizzaria está fechada agora${quando ? ` (abrimos ${quando})` : ""}. ` +
+      `Você pode montar o pedido e copiar o texto — o envio pelo botão volta a funcionar quando abrirmos.`;
   }
 
-  const promo = promoDoDia();
+  const promos = promosDoDia();
   const banner = $("#promoBanner");
   if (banner) {
-    banner.hidden = !promo;
-    if (promo) banner.textContent = promo.texto;
+    banner.hidden = !promos.length;
+    banner.textContent = promos.map(promoTexto).join("  ·  ");
+  }
+
+  const horario = $("#footHorario");
+  if (horario) {
+    horario.textContent =
+      `Pizzaria Primos · ${formatDias(CONFIG.diasAbre)}, ` +
+      `${fmtHora(CONFIG.abreHora)}–${fmtHora(CONFIG.fechaHora)}`;
   }
 
   const send = $("#sendBtn");

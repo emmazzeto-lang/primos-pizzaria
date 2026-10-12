@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#171310">
+<title>Painel — Pizzaria Primos</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32.png">
+<link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles/admin.css">
+</head>
+<body>
+
+<!-- ============================ ENTRAR ============================ -->
+<main id="login" class="login">
+  <form id="loginForm" class="card login__card" autocomplete="on">
+    <img class="login__logo" src="/assets/logo.png" alt="Pizzaria Primos" width="120" height="112">
+    <h1>Painel da pizzaria</h1>
+    <p class="muted">Aqui você muda o horário, os preços e as promoções do cardápio.</p>
+    <input type="text" name="usuario" value="painel" autocomplete="username" tabindex="-1" aria-hidden="true" class="sr">
+    <div class="field">
+      <label for="senha">Senha</label>
+      <input id="senha" name="senha" type="password" autocomplete="current-password" required>
+    </div>
+    <p id="loginErro" class="erro" role="alert" hidden></p>
+    <button id="entrar" type="submit" class="btn">Entrar</button>
+  </form>
+</main>
+
+<!-- ============================ PAINEL ============================ -->
+<div id="app" hidden>
+  <header class="top">
+    <div class="brand">
+      <img src="/assets/logo.png" alt="" width="34" height="32">
+      <span>Painel</span>
+    </div>
+    <nav class="top__links">
+      <a href="/" target="_blank" rel="noopener">Ver o site</a>
+      <button id="sair" type="button" class="link">Sair</button>
+    </nav>
+  </header>
+
+  <div class="wrap">
+    <div class="tabs" role="tablist" aria-label="Seções do painel">
+      <button class="tab" role="tab" id="t-func" aria-controls="p-func" aria-selected="true">Funcionamento</button>
+      <button class="tab" role="tab" id="t-precos" aria-controls="p-precos" aria-selected="false">Preços</button>
+      <button class="tab" role="tab" id="t-promos" aria-controls="p-promos" aria-selected="false">Promoções</button>
+      <button class="tab" role="tab" id="t-insumos" aria-controls="p-insumos" aria-selected="false">Insumos</button>
+    </div>
+
+    <section id="p-func" class="panel" role="tabpanel" aria-labelledby="t-func"></section>
+    <section id="p-precos" class="panel" role="tabpanel" aria-labelledby="t-precos" hidden></section>
+    <section id="p-promos" class="panel" role="tabpanel" aria-labelledby="t-promos" hidden></section>
+    <section id="p-insumos" class="panel" role="tabpanel" aria-labelledby="t-insumos" hidden></section>
+  </div>
+
+  <div class="savebar">
+    <span id="saveMsg" class="savebar__msg">Tudo salvo</span>
+    <button id="salvar" type="button" class="btn" disabled>Salvar alterações</button>
+  </div>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<script type="module" src="/admin/app.js"></script>
+</body>
+</html>

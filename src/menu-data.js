@@ -38,7 +38,7 @@ export const PIZZAS = [
 ];
 
 // Broto: tamanho pequeno, qualquer sabor, preço único
-export const BROTO_PRECO = 35;
+export const BROTO = { preco: 35 };
 
 // Vem em toda pizza — o cliente pode pedir para tirar
 export const ACOMPANHA = ["azeitona", "orégano"];
@@ -72,3 +72,9 @@ export const TIERS = [
   { label: "Da casa",   teste: (p) => p.preco > 62 && p.preco < 75 },
   { label: "Especiais", teste: (p) => p.preco >= 75 },
 ];
+
+// O grupo (Clássicas / Da casa / Especiais) é decidido uma vez, pelos preços originais,
+// para que mudar um preço no painel não mude o sabor de lugar no cardápio.
+PIZZAS.forEach((p) => {
+  p.grupo = p.doce ? -1 : TIERS.findIndex((t) => t.teste(p));
+});

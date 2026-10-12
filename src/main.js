@@ -8,6 +8,7 @@ import { on } from "./lib/bus.js";
 import { renderMenu } from "./menu-view.js";
 import { openOrder, renderOrder, initOrder } from "./order.js";
 import { paintStatus, paintCart } from "./ui.js";
+import { initRemote } from "./remote.js";
 
 /* Abrir o pedido pelos dois botões */
 $("#openCart").addEventListener("click", openOrder);
@@ -35,13 +36,20 @@ on("cart:changed", () => {
   if ($("#order").open) renderOrder();
 });
 
+/* Ajustes do painel chegaram (ou mudaram): redesenha cardápio, preços e status */
+on("remote:changed", () => {
+  renderMenu();
+  paintCart();
+});
+
 /* Rodapé */
 $("#footWa").href = "https://wa.me/" + CONFIG.whatsapp;
 const ig = $("#footIg");
 ig.href = "https://instagram.com/" + CONFIG.instagram;
 ig.textContent = "@" + CONFIG.instagram;
 
-/* Início */
+/* Início — primeiro aplica o último ajuste guardado, depois desenha */
+initRemote();
 renderMenu();
 initOrder();
 paintCart(); // já chama paintStatus()

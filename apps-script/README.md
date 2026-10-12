@@ -14,7 +14,7 @@ isso fica só na mensagem do WhatsApp.
 
 ---
 
-## Instalação (uma vez, ~5 minutos)
+## Instalação (uma vez, ~5 minutos) FEITO
 
 1. Abra <https://sheets.new> e dê um nome à planilha, ex.: **Pizzaria Primos — Pedidos**.
 2. Menu **Extensões → Apps Script**.
@@ -36,7 +36,7 @@ Pronto. A partir daí, todo pedido enviado vira uma linha na aba **Pedidos**.
 
 ---
 
-## Resumo automático por e-mail (opcional)
+## Resumo automático por e-mail (opcional) FEITO
 
 1. No Apps Script, na linha `const EMAIL_RESUMO = '';`, coloque o e-mail entre as aspas.
 2. Salve.

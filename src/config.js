@@ -33,5 +33,5 @@ export const CONFIG = {
 
   // Controle de estoque (opcional): cole a URL do Apps Script (termina em /exec).
   // Deixe "" para não registrar nada. Passo a passo em apps-script/README.md
-  estoque: "",
+  estoque: "https://script.google.com/macros/s/AKfycbwMg2tBLYWIlWfy2AF_dLj1AeOEgpzvpUD8YDfoM2fQFNCRMhas3MbnLQMsPOySh245SA/exec",
 };

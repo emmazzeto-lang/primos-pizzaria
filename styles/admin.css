@@ -6,7 +6,7 @@
 :root{
   --carvao:#171310; --brasa:#e24e1b; --brasa-2:#ff6a33; --dourado:#e9a23b;
   --creme:#f3e7d3; --creme-2:#e7d7bd; --papel:#fff8ec; --fumaca:#b7a99a; --tinta:#2a211a;
-  --erro:#b3261e;
+  --erro:#b3261e; --ok:#2f6b3a;
   --fonte-titulo:"Fraunces",Georgia,serif;
   --fonte-texto:"Hanken Grotesk","Segoe UI",system-ui,sans-serif;
   --fonte-ticket:"DM Mono",ui-monospace,Consolas,monospace;
@@ -37,7 +37,7 @@ button{ font:inherit; color:inherit; cursor:pointer; }
 }
 .field{ display:grid; gap:5px; }
 .field > label,.rotulo{ font-size:13px; color:color-mix(in srgb,var(--tinta) 70%,transparent); }
-input[type=text],input[type=password],input[type=date],input[type=time],select{
+input[type=text],input[type=password],input[type=date],input[type=time],input[type=datetime-local],input[type=number],select{
   width:100%; padding:11px 12px; font:inherit; color:var(--tinta);
   background:var(--papel); border:1px solid var(--creme-2); border-radius:11px;
 }
@@ -140,3 +140,46 @@ input[aria-invalid=true]{ border-color:var(--erro); }
   .insumo .nome{ grid-column:1 / -1; }
 }
 @media (prefers-reduced-motion:reduce){ *{ transition-duration:.001s !important; animation-duration:.001s !important; } }
+
+/* ---------- Página de pedidos ---------- */
+.badge{
+  display:inline-block; min-width:20px; padding:0 6px; margin-left:4px; border-radius:999px;
+  background:var(--brasa); color:#fff; font:500 12px/20px var(--fonte-ticket); text-align:center;
+}
+.tab[aria-selected=true] .badge{ background:#fff; color:var(--brasa); }
+.btn--sm{ padding:9px 14px; font-size:14px; border-radius:10px; }
+.ped-topo{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.seg{ display:flex; flex-wrap:wrap; gap:6px; }
+.seg button{ padding:8px 14px; border-radius:999px; border:1px solid var(--creme-2); background:var(--papel); color:var(--tinta); }
+.seg button[aria-pressed=true]{ background:var(--tinta); border-color:var(--tinta); color:var(--creme); font-weight:600; }
+
+.peds{ display:grid; gap:12px; }
+.ped{ display:grid; gap:10px; padding:16px; border-radius:18px; background:var(--creme); color:var(--tinta); }
+.ped--novo{ box-shadow:0 0 0 2px var(--dourado); }
+.ped--cancelado{ opacity:.65; }
+.ped__topo{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+.ped__cod{ font:500 19px var(--fonte-ticket); }
+.ped__hora{ font:13px var(--fonte-ticket); color:color-mix(in srgb,var(--tinta) 60%,transparent); margin-right:auto; }
+.tag{ font:12px var(--fonte-ticket); padding:3px 9px; border-radius:999px; border:1px solid var(--creme-2); background:var(--papel); }
+.tag--novo{ background:var(--brasa); border-color:transparent; color:#fff; }
+.tag--confirmado{ background:var(--dourado); border-color:transparent; }
+.tag--entregue{ background:var(--ok); border-color:transparent; color:#fff; }
+.tag--cancelado{ color:var(--erro); border-color:var(--erro); }
+.ped__itens{ list-style:none; margin:0; padding:0; display:grid; gap:8px; }
+.ped__item{ font-weight:600; }
+.ped__det{ margin:0; font-size:14px; color:color-mix(in srgb,var(--tinta) 68%,transparent); }
+.ped__meta{ margin:0; font-size:14px; }
+.ped__acoes{ display:flex; flex-wrap:wrap; gap:8px; }
+.card-vazio{ background:var(--creme); border-radius:18px; color:color-mix(in srgb,var(--tinta) 60%,transparent); }
+
+/* ---------- Registrar pedido fora do site ---------- */
+.sub-h{ font-size:17px; margin:4px 0 -4px; }
+.adic{ border:1px solid var(--creme-2); border-radius:11px; background:var(--papel); padding:10px 12px; }
+.adic summary{ cursor:pointer; font-size:14px; }
+.adic__lista{ display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+.pick{ display:inline-flex; align-items:center; gap:6px; padding:6px 11px; border:1px solid var(--creme-2); border-radius:999px; font-size:13px; background:#fff; }
+.pick:has(input:checked){ border-color:var(--brasa); background:color-mix(in srgb,var(--brasa) 12%,#fff); font-weight:600; }
+.pick input{ accent-color:var(--brasa); }
+.total-linha{ display:flex; flex-wrap:wrap; align-items:center; gap:12px; }
+.total-linha input{ max-width:140px; text-align:right; font-family:var(--fonte-ticket); }
+

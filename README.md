@@ -21,7 +21,7 @@ confirmação acontece na conversa.
   doces, calzone e bebidas.
 - **Montar a pizza:** tamanho **broto ou grande**, sabor único ou **meio a meio**
   (só salgadas, cobra o mais caro), **borda recheada** (só grande), **adicionais**,
-  **tirar ingredientes**, observação e quantidade.
+  **tirar ingredientes** (de cada metade, no meio a meio), observação e quantidade.
 - **Calzone** e **bebidas** entram no mesmo carrinho.
 - **Entrega ou retirada no balcão** — o formulário e a mensagem se ajustam.
 - **Promoção por dia da semana** (ex.: calabresa de quinta) — faixa no topo e preço
@@ -32,8 +32,9 @@ confirmação acontece na conversa.
   próxima visita (`localStorage`).
 - **Aberto / fechado automático:** calculado pelo horário do aparelho; fora do
   expediente o envio fica travado, mas dá para montar e copiar o pedido.
-- **Painel admin (`/admin`):** com senha, a dona abre ou fecha a pizzaria por um
-  período, muda dias e horário, altera preços, cria promoções por dia da semana e
+- **Painel admin (`/admin`):** com senha, a dona acompanha e confirma os pedidos
+  (inclusive os feitos fora do site), abre ou fecha a pizzaria por um período, muda
+  dias e horário, altera preços, cria promoções por dia da semana e
   cadastra o preço dos insumos — tudo gravado na planilha Google e lido pelo site
   (ver [`apps-script/`](apps-script/README.md)).
 - **Controle de estoque opcional:** cada pedido enviado pode ser registrado numa
@@ -77,7 +78,7 @@ primos-site/
 │       ├── dom.js         # atalhos $ e $$
 │       ├── format.js      # formatação de dinheiro/texto
 │       └── bus.js         # event bus mínimo ("cart:changed")
-├── admin/                 # painel da dona (página + app.js)
+├── admin/                 # painel da dona (app.js = ajustes, pedidos.js = pedidos)
 ├── assets/
 │   └── logo.png
 └── apps-script/           # servidor na planilha Google (Google Apps Script)

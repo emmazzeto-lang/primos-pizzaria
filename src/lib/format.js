@@ -5,6 +5,10 @@ export const numS = (n) => (Number.isInteger(n) ? String(n) : n.toFixed(2).repla
 export const brlS = (n) => "R$ " + numS(n);
 export const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
+/** Escapa texto para colocar dentro de innerHTML. */
+export const esc = (s) =>
+  String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+
 /** 19 → "19h", 19.5 → "19h30" */
 export function fmtHora(h) {
   const hh = Math.floor(h);

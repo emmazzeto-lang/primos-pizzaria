@@ -422,6 +422,12 @@ hr.soft{ border:0; border-top:1px solid var(--creme-2); margin:22px 0; }
 }
 .stepper--sm output{ font-family:var(--fonte-ticket); font-size:14px; min-width:1.5ch; text-align:center; }
 
+/* ---------- Subtítulos dos grupos de "tirar" (meio a meio) -------------- */
+.sub{ margin:12px 0 6px; font-size:13px; font-weight:600; color:color-mix(in srgb,var(--tinta) 75%,transparent); }
+.sub[hidden]{ display:none; }
+#shTirarToda{ margin-top:8px; }
+.sub + .chips{ margin-top:0; }
+
 @media (prefers-reduced-motion:reduce){
   *{ animation-duration:.001s !important; transition-duration:.001s !important; }
   .hero__glow{ opacity:.7; }

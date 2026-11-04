@@ -7,6 +7,7 @@
  *   GET  ?action=config      → ajustes PÚBLICOS (o site lê ao abrir). Sem insumos.
  *   POST {action:"login"}    → confere a senha, devolve um token de sessão (6 h).
  *   POST {action:"get"|"save"|"logout", token} → só com token válido.
+ *   POST {action:"pedidos"|"pedido_status"|"pedido_novo", token} → página de pedidos do painel.
  *
  * A senha NÃO fica no código: crie a propriedade de script ADMIN_SENHA
  * (Configurações do projeto → Propriedades do script). Sem ela o painel não abre.
@@ -56,6 +57,15 @@ function adminPost_(d) {
       case 'save':
         exigeSessao_(d.token);
         return json_(salvar_(d));
+      case 'pedidos':
+        exigeSessao_(d.token);
+        return json_(listaPedidos_());
+      case 'pedido_status':
+        exigeSessao_(d.token);
+        return json_(mudaStatus_(d));
+      case 'pedido_novo':
+        exigeSessao_(d.token);
+        return json_(novoPedidoManual_(d));
       default:
         return json_({ ok: false, erro: 'Ação desconhecida.' });
     }
@@ -364,3 +374,113 @@ function validaInsumos_(lista) {
   });
   return saida;
 }
+
+/* ------------------------------------------------------------------ */
+/*  Pedidos (página "Pedidos" do painel)                              */
+/* ------------------------------------------------------------------ */
+
+/** Pedidos dos últimos 7 dias, do mais novo para o mais antigo. */
+function listaPedidos_() {
+  const aba = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(ABA_PEDIDOS);
+  if (!aba || aba.getLastRow() < 2) return { ok: true, pedidos: [] };
+
+  const ultima = aba.getLastRow();
+  const n = Math.min(ultima - 1, 400);
+  const linhas = aba.getRange(ultima - n + 1, 1, n, CABECALHO_PEDIDOS.length).getValues();
+  const corte = Date.now() - 7 * 24 * 3600 * 1000;
+  const pedidos = [];
+
+  linhas.forEach(function (l) {
+    const id = String(l[COL.CODIGO - 1] || '').trim();
+    if (!id) return;                                   // linhas de antes dos códigos
+    const quando = l[0] instanceof Date ? l[0] : new Date(l[0]);
+    if (isNaN(quando.getTime()) || quando.getTime() < corte) return;
+
+    var itens = [];
+    try { itens = JSON.parse(l[COL.DETALHE - 1]); } catch (e) {}
+    if (!Array.isArray(itens)) itens = [];
+
+    const status = String(l[COL.STATUS - 1]);
+    const origem = String(l[COL.ORIGEM - 1]);
+    pedidos.push({
+      id: id,
+      ts: quando.toISOString(),
+      status: STATUS_VALIDOS.indexOf(status) >= 0 ? status : 'novo',
+      origem: ORIGENS_VALIDAS.indexOf(origem) >= 0 ? origem : 'site',
+      entrega: String(l[COL.ENTREGA - 1]) === 'retirada' ? 'retirada' : 'entrega',
+      bairro: String(l[COL.BAIRRO - 1] || ''),
+      pagamento: String(l[COL.PAGAMENTO - 1] || ''),
+      total: Number(l[COL.TOTAL - 1]) || 0,
+      cliente: String(l[COL.CLIENTE - 1] || ''),
+      obs: String(l[COL.OBS - 1] || ''),
+      itens: itens,
+      texto: String(l[COL.ITENS - 1] || ''),
+    });
+  });
+
+  pedidos.sort(function (a, b) { return a.ts < b.ts ? 1 : a.ts > b.ts ? -1 : 0; });
+  return { ok: true, pedidos: pedidos };
+}
+
+function mudaStatus_(d) {
+  const id = typeof d.id === 'string' ? d.id.toUpperCase() : '';
+  if (!/^[A-Z0-9]{4,8}$/.test(id)) throw new ErroUsuario('Código de pedido inválido.');
+  if (STATUS_VALIDOS.indexOf(d.status) < 0) throw new ErroUsuario('Status inválido.');
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(15000);
+  try {
+    const aba = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(ABA_PEDIDOS);
+    if (!aba || aba.getLastRow() < 2) throw new ErroUsuario('Pedido não encontrado.');
+
+    // procura de baixo para cima: o pedido que se mexe é quase sempre dos últimos
+    const ultima = aba.getLastRow();
+    const n = Math.min(ultima - 1, 800);
+    const ini = ultima - n + 1;
+    const codigos = aba.getRange(ini, COL.CODIGO, n, 1).getValues();
+    let linha = 0;
+    for (let i = codigos.length - 1; i >= 0; i--) {
+      if (String(codigos[i][0]).trim() === id) { linha = ini + i; break; }
+    }
+    if (!linha) throw new ErroUsuario('Pedido não encontrado (talvez seja muito antigo).');
+
+    aba.getRange(linha, COL.STATUS).setValue(d.status);
+    return { ok: true, id: id, status: d.status };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/** Pedido que NÃO veio pelo site (WhatsApp, telefone, balcão…), digitado pela dona. */
+function novoPedidoManual_(d) {
+  const itens = limpaItens_(d.itens);
+  if (!itens.length) throw new ErroUsuario('Adicione pelo menos um item ao pedido.');
+
+  const origem = String(d.origem || '');
+  if (ORIGENS_VALIDAS.indexOf(origem) <= 0) throw new ErroUsuario('Escolha como o pedido foi feito.');   // 0 = 'site'
+  const pagamento = String(d.pagamento || '');
+  if (PAGAMENTOS.indexOf(pagamento) < 0) throw new ErroUsuario('Escolha a forma de pagamento.');
+  const entrega = d.entrega === 'retirada' ? 'retirada' : 'entrega';
+
+  let quando = d.quando ? new Date(d.quando) : new Date();
+  if (isNaN(quando.getTime())) throw new ErroUsuario('Data e hora inválidas.');
+  const agora = Date.now();
+  if (quando.getTime() > agora + 24 * 3600 * 1000) throw new ErroUsuario('A data do pedido está no futuro.');
+  if (quando.getTime() < agora - 31 * 24 * 3600 * 1000) throw new ErroUsuario('A data do pedido é muito antiga (máximo 31 dias).');
+
+  const id = gravaPedido_({
+    quando: quando,
+    bairro: texto_(d.bairro, 80, 'Bairro', false),
+    pagamento: pagamento,
+    total: dinheiro_(d.total, 10000, 'Total'),
+    itens: itens,
+    id: '',
+    status: 'confirmado',        // quem digita já combinou o pedido
+    origem: origem,
+    entrega: entrega,
+    cliente: texto_(d.cliente, 60, 'Cliente', false),
+    obs: texto_(d.obs, 200, 'Observação', false),
+  });
+  return { ok: true, id: id };
+}
+

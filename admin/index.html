@@ -48,19 +48,21 @@
 
   <div class="wrap">
     <div class="tabs" role="tablist" aria-label="Seções do painel">
-      <button class="tab" role="tab" id="t-func" aria-controls="p-func" aria-selected="true">Funcionamento</button>
+      <button class="tab" role="tab" id="t-pedidos" aria-controls="p-pedidos" aria-selected="true">Pedidos <span id="badgePedidos" class="badge" hidden>0</span></button>
+      <button class="tab" role="tab" id="t-func" aria-controls="p-func" aria-selected="false">Funcionamento</button>
       <button class="tab" role="tab" id="t-precos" aria-controls="p-precos" aria-selected="false">Preços</button>
       <button class="tab" role="tab" id="t-promos" aria-controls="p-promos" aria-selected="false">Promoções</button>
       <button class="tab" role="tab" id="t-insumos" aria-controls="p-insumos" aria-selected="false">Insumos</button>
     </div>
 
-    <section id="p-func" class="panel" role="tabpanel" aria-labelledby="t-func"></section>
+    <section id="p-pedidos" class="panel" role="tabpanel" aria-labelledby="t-pedidos"></section>
+    <section id="p-func" class="panel" role="tabpanel" aria-labelledby="t-func" hidden></section>
     <section id="p-precos" class="panel" role="tabpanel" aria-labelledby="t-precos" hidden></section>
     <section id="p-promos" class="panel" role="tabpanel" aria-labelledby="t-promos" hidden></section>
     <section id="p-insumos" class="panel" role="tabpanel" aria-labelledby="t-insumos" hidden></section>
   </div>
 
-  <div class="savebar">
+  <div class="savebar" hidden>
     <span id="saveMsg" class="savebar__msg">Tudo salvo</span>
     <button id="salvar" type="button" class="btn" disabled>Salvar alterações</button>
   </div>

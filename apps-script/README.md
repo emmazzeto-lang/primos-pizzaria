@@ -8,9 +8,11 @@ esse resumo chega no seu e-mail.
 valor total e os itens do pedido. **Não vai** nome, telefone nem endereço —
 isso fica só na mensagem do WhatsApp.
 
-> Observação honesta: a planilha conta os pedidos **enviados pelo site**, não os
-> confirmados no WhatsApp. Se um cliente montar e não enviar, ou a pizzaria
-> recusar, a contagem fica um pouco acima do real.
+> Observação honesta: o site registra o pedido quando o cliente **toca em enviar**,
+> não quando a mensagem chega no WhatsApp. Se ele montar, tocar em enviar e desistir,
+> o pedido fica na planilha. É para isso que existe a página **Pedidos** do painel:
+> a dona confere cada pedido na conversa e **confirma** (ou **cancela** — pedido
+> cancelado não conta no resumo do dia).
 
 ---
 
@@ -102,6 +104,46 @@ e o site lê isso quando alguém abre o cardápio.
 
 Edite a propriedade `ADMIN_SENHA`. Quem já estava logado continua com acesso até a
 sessão vencer (no máximo 6 horas) — a troca vale para as próximas entradas.
+
+---
+
+## Página "Pedidos" do painel
+
+Na aba **Pedidos** do `/admin` a dona acompanha os pedidos dos últimos 7 dias:
+
+- Cada pedido do site chega com um **código** (ex.: `#K7P3X`) que também aparece
+  no título da mensagem do WhatsApp do cliente. É assim que se acha o pedido certo
+  **sem o site guardar nome, telefone ou endereço**.
+- O pedido anda: **Novo → Confirmado → Entregue** (ou **Cancelado**, com opção de restaurar).
+- A página se atualiza sozinha a cada ~25 segundos e o número de pedidos novos
+  aparece na aba e no título da página.
+- **Registrar pedido feito fora do site:** para pedidos combinados por WhatsApp,
+  ligação ou no balcão. Eles entram como "confirmado", contam no resumo do dia e
+  no faturamento e ficam marcados como "(digitado)".
+
+### Atualizar (quem já tinha o painel instalado)
+
+Dessa vez **os dois arquivos mudaram**. No Apps Script:
+
+1. Substitua o conteúdo do arquivo principal (`Código.gs` / `estoque.gs`) pelo de `estoque.gs`.
+2. Substitua o conteúdo de `admin` pelo de `admin.gs`.
+3. **Implantar → Gerenciar implantações → ✏️ → Versão: _Nova versão_ → Implantar** (mesmo link).
+4. Confira a linha `const EMAIL_RESUMO = ...` do `estoque.gs`: ela volta ao valor do arquivo.
+
+Não há senha nem propriedade nova. A aba `Pedidos` da planilha ganha sozinha as
+colunas novas (Código, Status, Origem, Entrega, Cliente, Observação) no primeiro
+pedido; **as linhas antigas continuam lá**, mas como não têm código não aparecem
+na página Pedidos (continuam valendo no resumo do dia).
+
+### Cuidados
+
+- O endereço que recebe os pedidos do site é público (precisa ser, o site o usa).
+  Por isso ele limpa e limita tudo o que recebe, e aceita no máximo 60 pedidos por
+  minuto. Pedido falso que passar é só cancelar na página Pedidos.
+- Os códigos são sorteados (5 letras/números sem O, I, 0 e 1). Se um código já
+  existir, a planilha troca por outro.
+- O resumo do dia agora separa **Broto** de **Grande** e conta bebidas (antes
+  tudo entrava como "Grande").
 
 ---
 

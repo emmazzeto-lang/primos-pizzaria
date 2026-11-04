@@ -3,7 +3,9 @@
  * pagamento e, no fim, abre o WhatsApp com a mensagem pronta.
  */
 import { $, $$ } from "./lib/dom.js";
-import { brl } from "./lib/format.js";
+import { brl, esc } from "./lib/format.js";
+import { gerarCodigo } from "./lib/codigo.js";
+import { dividirTirar, frasesSemDoItem } from "./lib/item-text.js";
 import { CONFIG } from "./config.js";
 import {
   cart,
@@ -43,9 +45,9 @@ export function renderOrder() {
         const editavel = it.tipo === "pizza" || it.tipo === "calzone";
         return `
       <div class="line">
-        <div class="line__name">${it.tipoLabel} — ${it.nome}</div>
+        <div class="line__name">${esc(it.tipoLabel)} — ${esc(it.nome)}</div>
         <div class="line__price">${brl(it.precoUnit * it.qtd)}</div>
-        ${resumoLinha(it) ? `<div class="line__meta">${resumoLinha(it)}</div>` : ""}
+        ${resumoLinha(it) ? `<div class="line__meta">${esc(resumoLinha(it))}</div>` : ""}
         <div class="line__ctrl">
           <span class="stepper stepper--sm">
             <button type="button" data-dec="${i}" aria-label="Menos um">–</button>
@@ -86,7 +88,7 @@ function resumoLinha(it) {
   const bits = [];
   if (it.meio) bits.push(`meio a meio c/ ${it.meio.nome}`);
   if (it.adicionais?.length) bits.push("com " + it.adicionais.join(", "));
-  if (it.tirar?.length) bits.push("sem " + it.tirar.join(", "));
+  bits.push(...frasesSemDoItem(it));
   if (it.borda) bits.push("borda " + it.borda.nome.toLowerCase());
   if (it.promo) bits.push("promo");
   if (it.obs) bits.push("obs: " + it.obs);
@@ -148,8 +150,8 @@ function podeEnviar() {
 /* ------------------------------------------------------------------ */
 /*  Mensagem para o WhatsApp                                          */
 /* ------------------------------------------------------------------ */
-function buildMessage(d) {
-  const L = ["*Pizzaria Primos — Pedido*", ""];
+function buildMessage(d, codigo = "") {
+  const L = [`*Pizzaria Primos — Pedido${codigo ? " #" + codigo : ""}*`, ""];
 
   cart.forEach((it) => {
     if (it.tipo === "bebida") {
@@ -162,7 +164,7 @@ function buildMessage(d) {
     L.push(head);
     if (it.adicionais?.length) L.push(`   • com ${it.adicionais.join(", ")}`);
     if (it.borda) L.push(`   • borda ${it.borda.nome}`);
-    if (it.tirar?.length) L.push(`   • sem ${it.tirar.join(", ")}`);
+    frasesSemDoItem(it).forEach((f) => L.push(`   • ${f}`));
     if (it.promo) L.push(`   • promoção do dia`);
     if (it.obs) L.push(`   • obs: ${it.obs}`);
     L.push(`   • ${brl(it.precoUnit)} cada`);
@@ -195,26 +197,32 @@ function buildMessage(d) {
 /*  Registro opcional para o controle de estoque                      */
 /*  (não envia nome, telefone nem endereço — só o que foi pedido)     */
 /* ------------------------------------------------------------------ */
-function logForStock(d) {
+function logForStock(d, codigo) {
   if (!CONFIG.estoque) return;
 
   const payload = {
+    id: codigo,
     ts: new Date().toISOString(),
     entrega: d.entrega,
     bairro: d.entrega === "entrega" ? d.bairro : "",
     pagamento: d.pagamento,
     total: cartTotal(),
-    itens: cart.map((it) => ({
-      tipo: it.tipo,
-      sabor: it.nome,
-      tamanho: it.tamanho || null,
-      meio: it.meio?.nome || null,
-      qtd: it.qtd,
-      tirar: it.tirar || [],
-      adicionais: it.adicionais || [],
-      borda: it.borda?.nome || null,
-      preco: it.precoUnit,
-    })),
+    itens: cart.map((it) => {
+      const sem = dividirTirar(it);
+      return {
+        tipo: it.tipo,
+        sabor: it.nome,
+        tamanho: it.tamanho || null,
+        meio: it.meio?.nome || null,
+        qtd: it.qtd,
+        tirar: sem.primeira,
+        tirarMeio: sem.meio,
+        tirarToda: sem.toda,
+        adicionais: it.adicionais || [],
+        borda: it.borda?.nome || null,
+        preco: it.precoUnit,
+      };
+    }),
   };
 
   try {
@@ -259,10 +267,12 @@ export function initOrder() {
 
     const d = collect();
     $("#f-save").checked ? saveCliente(d) : forgetCliente();
-    logForStock(d);
+    // O código só existe se o pedido for registrado na planilha (senão não há o que procurar no painel)
+    const codigo = CONFIG.estoque ? gerarCodigo() : "";
+    logForStock(d, codigo);
 
     const url =
-      "https://wa.me/" + CONFIG.whatsapp + "?text=" + encodeURIComponent(buildMessage(d));
+      "https://wa.me/" + CONFIG.whatsapp + "?text=" + encodeURIComponent(buildMessage(d, codigo));
     const win = window.open(url, "_blank", "noopener");
     if (!win) location.href = url;
   });

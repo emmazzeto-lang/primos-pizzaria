@@ -1,7 +1,8 @@
 /**
  * Painel da pizzaria (/admin).
  * Fala com o Apps Script (CONFIG.estoque): entra com a senha, lê os ajustes,
- * mostra quatro abas e grava tudo de volta na planilha.
+ * mostra as abas (Pedidos, Funcionamento, Preços, Promoções, Insumos) e grava
+ * os ajustes de volta na planilha.
  *
  * A tela é montada com createElement/textContent — nenhum dado da planilha
  * é inserido como HTML.
@@ -10,27 +11,13 @@ import { CONFIG } from "../src/config.js";
 import { PIZZAS } from "../src/menu-data.js";
 import { listaPrecos } from "../src/price-keys.js";
 import { lojaStatus, NOMES_DIA, ymd } from "../src/shop-status.js";
+import { $, h } from "./dom.js";
+import { criarPedidos } from "./pedidos.js";
 
 const TOKEN_KEY = "primos.admin.token";
 const DIAS_CURTOS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 const UNIDADES = ["kg", "g", "L", "ml", "un", "pct", "cx", "lata"];
 const PRECOS_PADRAO = Object.fromEntries(listaPrecos().map((i) => [i.chave, i.get()]));
-
-const $ = (s, r = document) => r.querySelector(s);
-
-/** Cria elemento: h("div", {class:"x", onclick:fn}, "texto", outroNo) */
-function h(tag, props = {}, ...filhos) {
-  const el = document.createElement(tag);
-  for (const [k, v] of Object.entries(props)) {
-    if (v === false || v == null) continue;
-    if (k === "class") el.className = v;
-    else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
-    else if (v === true) el.setAttribute(k, "");
-    else el.setAttribute(k, v);
-  }
-  filhos.flat().forEach((c) => el.append(c instanceof Node ? c : document.createTextNode(String(c))));
-  return el;
-}
 
 /* ------------------------------------------------------------------ */
 /*  Conversas com o servidor                                          */
@@ -409,6 +396,26 @@ async function salvar() {
 /* ------------------------------------------------------------------ */
 /*  Telas: entrar / painel                                            */
 /* ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------ */
+/*  Pedidos (página própria: confirma e registra pedidos)             */
+/* ------------------------------------------------------------------ */
+const TITULO = document.title;
+
+function mostraNovos(n) {
+  const badge = $("#badgePedidos");
+  badge.hidden = n === 0;
+  badge.textContent = String(n);
+  document.title = n ? `(${n}) ${TITULO}` : TITULO;
+}
+
+const pedidos = criarPedidos({
+  api: (...a) => api(...a),
+  aviso: (...a) => aviso(...a),
+  estado: () => estado,
+  sessaoExpirou: () => voltarAoLogin("Sua sessão expirou. Entre de novo."),
+  aoMudarNovos: mostraNovos,
+});
+
 function mostrarPainel() {
   $("#login").hidden = true;
   $("#app").hidden = false;
@@ -417,9 +424,12 @@ function mostrarPainel() {
   abaPromos();
   abaInsumos();
   marcarSalvo();
+  pedidos.iniciar();
 }
 
 function voltarAoLogin(msg = "") {
+  pedidos.parar();
+  mostraNovos(0);
   token = "";
   sessionStorage.removeItem(TOKEN_KEY);
   $("#app").hidden = true;
@@ -475,6 +485,8 @@ document.querySelectorAll(".tab").forEach((aba) =>
       t.setAttribute("aria-selected", String(ativa));
       $("#" + t.getAttribute("aria-controls")).hidden = !ativa;
     });
+    // "Salvar alterações" é das abas de ajustes; os pedidos agem na hora
+    $(".savebar").hidden = aba.id === "t-pedidos";
   })
 );
 

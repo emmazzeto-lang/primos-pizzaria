@@ -16,6 +16,7 @@ import {
   ADICIONAIS,
 } from "./menu-data.js";
 import { pizzaById, addItem, replaceItem } from "./store.js";
+import { frasesSem } from "./lib/item-text.js";
 import { precoComPromo } from "./promos.js";
 
 const sheet = $("#sheet");
@@ -103,12 +104,18 @@ export function openBuilder(tipo, id, preload = null) {
     );
   }
 
-  // ----- tirar ingredientes
-  const ingIniciais = isPizza ? [...pizza.ing, ...ACOMPANHA] : [...ACOMPANHA];
+  // ----- tirar ingredientes (no meio a meio, cada metade tem os seus)
+  const primeiroSabor = isPizza ? pizza : PIZZAS[0]; // calzone começa no 1º sabor da lista
   html.push(
     `<div class="block"><div class="block__t">Tirar algo? ` +
       `<span style="text-transform:none;letter-spacing:0">(opcional)</span></div>` +
-      `<div class="chips" id="shTirar">${chipsHTML(ingIniciais, "chip")}</div>` +
+      `<p class="sub" id="tirarT1" hidden></p>` +
+      `<div class="chips" id="shTirar">${chipsHTML(primeiroSabor.ing, "chip")}</div>` +
+      `<div id="tirarMeioWrap" hidden>` +
+      `<p class="sub" id="tirarT2"></p>` +
+      `<div class="chips" id="shTirarMeio"></div></div>` +
+      `<p class="sub" id="tirarT3" hidden>Na pizza toda</p>` +
+      `<div class="chips" id="shTirarToda">${chipsHTML(ACOMPANHA, "chip")}</div>` +
       `<p class="note" id="tirarNote" style="margin-top:8px"></p></div>`
   );
 
@@ -152,7 +159,13 @@ export function openBuilder(tipo, id, preload = null) {
   const secondId = () => $("#shSabor2")?.value;
   const bordaValue = () =>
     isGrande() ? sheet.querySelector("input[name=bd]:checked").value : "";
-  const removed = () => $$("#shTirar input:checked").map((i) => i.value);
+  // tirar: 1ª metade (ou pizza inteira) + azeitona/orégano — mesma forma de sempre
+  const removed = () =>
+    [...$$("#shTirar input:checked"), ...$$("#shTirarToda input:checked")].map((i) => i.value);
+  // tirar da 2ª metade (só vale no meio a meio)
+  const removedMeio = () =>
+    isHalf() ? $$("#shTirarMeio input:checked").map((i) => i.value) : [];
+  const nomeMeio = () => (secondId() ? pizzaById(secondId()).nome : "");
   const extras = () => $$("#shAdd input:checked").map((i) => i.value);
 
   function precoBase() {
@@ -200,8 +213,22 @@ export function openBuilder(tipo, id, preload = null) {
       (usouPromo() ? "  · promo" : "");
     $("#addPrice").textContent = brl(unit * qtd);
 
-    const r = removed();
-    $("#tirarNote").textContent = r.length ? "sem " + r.join(", ") : "";
+    const half = isHalf();
+    $("#tirarT1").hidden = !half;
+    $("#tirarMeioWrap").hidden = !half;
+    $("#tirarT3").hidden = !half;
+    if (half) {
+      $("#tirarT1").textContent = `Metade ${pizzaById(saborId()).nome}`;
+      $("#tirarT2").textContent = `Metade ${nomeMeio()}`;
+    }
+    const sem = frasesSem({
+      nome: pizzaById(saborId()).nome,
+      meioNome: half ? nomeMeio() : "",
+      primeira: $$("#shTirar input:checked").map((i) => i.value),
+      meio: removedMeio(),
+      toda: $$("#shTirarToda input:checked").map((i) => i.value),
+    });
+    $("#tirarNote").textContent = sem.join(" · ");
     const a = extras();
     $("#addNote").textContent = a.length
       ? `com ${a.join(", ")}  (+ ${brl(a.length * ADICIONAIS.preco)})`
@@ -214,19 +241,29 @@ export function openBuilder(tipo, id, preload = null) {
   bind("input[name=tam]");
   bind("input[name=bd]");
   bind("#shTirar input");
+  bind("#shTirarToda input");
   bind("#shAdd input");
+
+  // chips da 2ª metade: refeitos sempre que o 2º sabor muda (o que estava marcado se perde)
+  function desenhaTirarMeio() {
+    if (!secondId()) return;
+    $("#shTirarMeio").innerHTML = chipsHTML(pizzaById(secondId()).ing, "chip");
+    bind("#shTirarMeio input");
+  }
+  desenhaTirarMeio();
+
   sheet.querySelectorAll("input[name=mm]").forEach((r) =>
     r.addEventListener("change", (e) => {
       $("#mmWrap").hidden = e.target.value !== "meio";
       refresh();
     })
   );
-  $("#shSabor2")?.addEventListener("change", refresh);
+  $("#shSabor2")?.addEventListener("change", () => {
+    desenhaTirarMeio();
+    refresh();
+  });
   $("#shSabor")?.addEventListener("change", () => {
-    $("#shTirar").innerHTML = chipsHTML(
-      [...pizzaById($("#shSabor").value).ing, ...ACOMPANHA],
-      "chip"
-    );
+    $("#shTirar").innerHTML = chipsHTML(pizzaById($("#shSabor").value).ing, "chip");
     bind("#shTirar input");
     refresh();
   });
@@ -254,6 +291,11 @@ export function openBuilder(tipo, id, preload = null) {
         mm.checked = true;
         $("#mmWrap").hidden = false;
         $("#shSabor2").value = preload.meio.id;
+        desenhaTirarMeio();
+        (preload.tirarMeio || []).forEach((t) => {
+          const box = $$("#shTirarMeio input").find((i) => i.value === t);
+          if (box) box.checked = true;
+        });
       }
     }
     if (isPizza && preload.borda) {
@@ -261,7 +303,7 @@ export function openBuilder(tipo, id, preload = null) {
       if (r) r.checked = true;
     }
     (preload.tirar || []).forEach((t) => {
-      const box = $$("#shTirar input").find((i) => i.value === t);
+      const box = [...$$("#shTirar input"), ...$$("#shTirarToda input")].find((i) => i.value === t);
       if (box) box.checked = true;
     });
     (preload.adicionais || []).forEach((a) => {
@@ -293,6 +335,7 @@ export function openBuilder(tipo, id, preload = null) {
         ? { id: secondId(), nome: pizzaById(secondId()).nome }
         : null,
       tirar: removed(),
+      tirarMeio: removedMeio(),
       borda: bordaValue() ? { nome: bordaValue(), preco: BORDA.preco } : null,
       adicionais: extras(),
       obs: $("#shObs").value.trim(),

@@ -220,13 +220,18 @@ input[type=search]{
 .barra__valor{ font:500 13px var(--fonte-ticket); min-width:2ch; text-align:right; }
 
 .colunas{ display:flex; align-items:stretch; gap:6px; height:176px; }
-.coluna{ flex:1 1 0; min-width:0; display:grid; grid-template-rows:18px 1fr 18px; justify-items:center; }
+.coluna{ position:relative; flex:1 1 0; min-width:0; display:grid; grid-template-rows:18px 1fr 18px; justify-items:center; }
+.coluna > *{ min-width:0; }
 .coluna__valor{ font:500 12px var(--fonte-ticket); }
 .coluna__barra-box{ display:flex; align-items:flex-end; width:100%; max-width:34px; border-bottom:1px solid color-mix(in srgb,var(--tinta) 25%,transparent); }
 .coluna__barra{ display:block; width:100%; border-radius:4px 4px 0 0; background:color-mix(in srgb,var(--brasa) 42%,var(--creme-2)); }
 .coluna--top .coluna__barra{ background:var(--brasa); }
 .coluna--top .coluna__valor{ font-weight:700; }
-.coluna__rotulo{ font:11px var(--fonte-ticket); color:color-mix(in srgb,var(--tinta) 66%,transparent); white-space:nowrap; }
+/* o rótulo não entra na conta da largura: com 30 colunas, "15/10" não pode alargar o gráfico */
+.coluna__rotulo{
+  position:absolute; left:50%; bottom:0; transform:translateX(-50%);
+  font:11px var(--fonte-ticket); color:color-mix(in srgb,var(--tinta) 66%,transparent); white-space:nowrap;
+}
 
 .tab-cons{ width:100%; border-collapse:collapse; font-size:14px; }
 .tab-cons th{ text-align:left; font:500 12px var(--fonte-ticket); color:color-mix(in srgb,var(--tinta) 62%,transparent); padding:6px 4px; border-bottom:1px solid var(--tinta); }
@@ -256,7 +261,7 @@ input[type=search]{
 .rec-status--falta{ background:color-mix(in srgb,var(--dourado) 22%,var(--papel)); border:1px solid var(--dourado); }
 .rec-status--ok{ background:color-mix(in srgb,var(--ok) 14%,var(--papel)); border:1px solid var(--ok); }
 .rec-aviso{ padding:12px 14px; border-radius:11px; font-size:14px; background:var(--papel); border:1px dashed var(--brasa); }
-.rec-cab,.rec-linha{ display:grid; grid-template-columns:1fr 110px 64px; gap:10px; align-items:center; }
+.rec-cab,.rec-linha{ display:grid; grid-template-columns:1fr 104px 78px; gap:10px; align-items:center; }
 .rec-cab{ font:12px var(--fonte-ticket); color:color-mix(in srgb,var(--tinta) 55%,transparent); text-transform:uppercase; letter-spacing:.08em; }
 .rec-linha{ padding:5px 0; border-bottom:1px solid var(--creme-2); }
 .rec-linha input,.rec-linha select{ padding:9px 10px; text-align:right; font-family:var(--fonte-ticket); }
@@ -271,5 +276,5 @@ input[type=search]{
 @media (max-width:520px){
   .barra{ grid-template-columns:minmax(70px,34%) 1fr auto; }
   .colunas{ gap:3px; }
-  .rec-cab,.rec-linha{ grid-template-columns:1fr 92px 58px; }
+  .rec-cab,.rec-linha{ grid-template-columns:1fr 92px 72px; }
 }

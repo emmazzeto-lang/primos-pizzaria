@@ -162,7 +162,6 @@ export function abaReceitas(painel, r, marcarSujo) {
     bloco1.prepend(
       h("div", { class: "rec-aviso" },
         h("b", {}, "Valores iniciais. "),
-        "Preenchi com as quantidades que a pizzaria informou. Foram deduzidos: azeitona = 20 un na grande (10 no broto), broto = 50% e calzone = 100% de uma grande, e o catupiry do Caipira = 100 g. ",
         "Confira, complete o que estiver em branco e clique em ",
         h("b", {}, "Salvar alterações"), "."
       )

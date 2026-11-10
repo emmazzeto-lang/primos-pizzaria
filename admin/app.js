@@ -1,7 +1,8 @@
 /**
  * Painel da pizzaria (/admin).
  * Fala com o Apps Script (CONFIG.estoque): entra com a senha, lê os ajustes,
- * mostra as abas (Pedidos, Funcionamento, Preços, Promoções, Insumos) e grava
+ * mostra as abas (Pedidos, Relatórios, Clientes, Funcionamento, Preços, Promoções,
+ * Receitas, Insumos) e grava
  * os ajustes de volta na planilha.
  *
  * A tela é montada com createElement/textContent — nenhum dado da planilha
@@ -13,6 +14,9 @@ import { listaPrecos } from "../src/price-keys.js";
 import { lojaStatus, NOMES_DIA, ymd } from "../src/shop-status.js";
 import { $, h } from "./dom.js";
 import { criarPedidos } from "./pedidos.js";
+import { criarRelatorios } from "./relatorios.js";
+import { criarClientes } from "./clientes.js";
+import { abaReceitas, montarReceitas, receitasParaEnvio } from "./receitas.js";
 
 const TOKEN_KEY = "primos.admin.token";
 const DIAS_CURTOS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
@@ -52,7 +56,7 @@ async function api(action, extra = {}) {
 /* ------------------------------------------------------------------ */
 /*  Estado                                                            */
 /* ------------------------------------------------------------------ */
-let estado = null; // { config, precos, promos, insumos }
+let estado = null; // { config, precos, promos, insumos, receitas }
 let sujo = false;
 
 const num = (txt) => {
@@ -82,6 +86,7 @@ function montarEstado(d) {
     // a planilha ainda sem promoções => começa com as do código
     promos: (d.promos ?? CONFIG.promos).map((p) => ({ dia: p.dia, sabor: p.sabor, tamanho: p.tamanho, preco: p.preco, texto: p.texto || "" })),
     insumos: (d.insumos || []).map((i) => ({ ...i })),
+    receitas: montarReceitas(d.receitas),
   };
   sujo = false;
 }
@@ -310,7 +315,7 @@ function abaInsumos() {
   painel.replaceChildren();
   const bloco = h("div", { class: "bloco" },
     h("h2", {}, "Preço dos insumos"),
-    h("p", { class: "muted" }, "Quanto você paga por cada ingrediente. Isso fica só na planilha — não aparece no site. Quando tivermos a quantidade de cada ingrediente por pizza, dá para calcular o custo e o lucro.")
+    h("p", { class: "muted" }, "Quanto você paga por cada ingrediente. Isso fica só na planilha — não aparece no site. O relatório usa estes preços para calcular o custo do que foi gasto: escreva o nome igual ao da aba Receitas (ex.: Mussarela) e use a unidade kg, g ou un (outras unidades não entram na conta).")
   );
 
   if (!estado.insumos.length) bloco.append(h("p", { class: "vazio" }, "Nenhum insumo cadastrado ainda."));
@@ -368,6 +373,7 @@ function montarEnvio() {
     precos: estado.precos,
     promos: estado.promos.map((p) => ({ dia: p.dia, sabor: p.sabor, tamanho: p.tamanho, preco: p.preco, texto: p.texto.trim() })),
     insumos: estado.insumos.filter((i) => i.nome.trim()).map((i) => ({ nome: i.nome.trim(), unidade: i.unidade, preco: i.preco })),
+    receitas: receitasParaEnvio(estado.receitas),
   };
 }
 
@@ -385,6 +391,10 @@ async function salvar() {
   try {
     await api("save", envio);
     marcarSalvo();
+    if (estado.receitas.semente) {
+      estado.receitas.semente = false;
+      abaReceitas($("#p-receitas"), estado.receitas, marcarSujo); // some o aviso de "valores iniciais"
+    }
     aviso("Salvo! O site já usa os novos valores (pode levar até 1 minuto).");
   } catch (e) {
     if (e.sessao) return voltarAoLogin("Sua sessão expirou. Entre de novo — o que você mexeu continua na tela, mas não foi salvo.");
@@ -408,6 +418,16 @@ function mostraNovos(n) {
   document.title = n ? `(${n}) ${TITULO}` : TITULO;
 }
 
+const relatorios = criarRelatorios({
+  api: (...a) => api(...a),
+  sessaoExpirou: () => voltarAoLogin("Sua sessão expirou. Entre de novo."),
+});
+
+const clientes = criarClientes({
+  api: (...a) => api(...a),
+  sessaoExpirou: () => voltarAoLogin("Sua sessão expirou. Entre de novo."),
+});
+
 const pedidos = criarPedidos({
   api: (...a) => api(...a),
   aviso: (...a) => aviso(...a),
@@ -423,12 +443,18 @@ function mostrarPainel() {
   abaPrecos();
   abaPromos();
   abaInsumos();
+  abaReceitas($("#p-receitas"), estado.receitas, marcarSujo);
   marcarSalvo();
+  // Planilha ainda sem receitas: o painel já preencheu com o que a pizzaria informou, mas só
+  // vale depois de salvar — então a barra de salvar já nasce pedindo isso.
+  if (estado.receitas.semente) marcarSujo();
   pedidos.iniciar();
 }
 
 function voltarAoLogin(msg = "") {
   pedidos.parar();
+  relatorios.reset();
+  clientes.reset();
   mostraNovos(0);
   token = "";
   sessionStorage.removeItem(TOKEN_KEY);
@@ -485,8 +511,10 @@ document.querySelectorAll(".tab").forEach((aba) =>
       t.setAttribute("aria-selected", String(ativa));
       $("#" + t.getAttribute("aria-controls")).hidden = !ativa;
     });
-    // "Salvar alterações" é das abas de ajustes; os pedidos agem na hora
-    $(".savebar").hidden = aba.id === "t-pedidos";
+    // "Salvar alterações" é das abas de ajustes; pedidos, relatórios e clientes agem na hora
+    $(".savebar").hidden = ["t-pedidos", "t-relatorios", "t-clientes"].includes(aba.id);
+    if (aba.id === "t-relatorios") relatorios.aoAbrir();
+    if (aba.id === "t-clientes") clientes.aoAbrir();
   })
 );
 

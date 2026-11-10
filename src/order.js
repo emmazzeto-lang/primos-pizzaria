@@ -195,7 +195,8 @@ function buildMessage(d, codigo = "") {
 
 /* ------------------------------------------------------------------ */
 /*  Registro opcional para o controle de estoque                      */
-/*  (não envia nome, telefone nem endereço — só o que foi pedido)     */
+/*  Envia o que foi pedido + nome e telefone (histórico do cliente,   */
+/*  avisado no formulário). O endereço (rua/número) nunca é enviado.  */
 /* ------------------------------------------------------------------ */
 function logForStock(d, codigo) {
   if (!CONFIG.estoque) return;
@@ -205,6 +206,8 @@ function logForStock(d, codigo) {
     ts: new Date().toISOString(),
     entrega: d.entrega,
     bairro: d.entrega === "entrega" ? d.bairro : "",
+    nome: d.nome,
+    telefone: d.telefone,
     pagamento: d.pagamento,
     total: cartTotal(),
     itens: cart.map((it) => {

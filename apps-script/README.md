@@ -5,8 +5,12 @@ sai um resumo do dia (sabores vendidos, bordas, faturamento) e, se você quiser,
 esse resumo chega no seu e-mail.
 
 **O que é enviado para a planilha:** data/hora, bairro, forma de pagamento,
-valor total e os itens do pedido. **Não vai** nome, telefone nem endereço —
-isso fica só na mensagem do WhatsApp.
+valor total, os itens do pedido e o **nome e o telefone** do cliente (para o
+histórico de consumo dele, aba Clientes do painel; o site avisa isso no
+formulário). **Não vai** o endereço (rua e número) — isso fica só na mensagem do
+WhatsApp. Nome e telefone só saem da planilha para quem tem a senha do painel;
+o endereço público do site nunca os devolve. Para apagar os dados de um cliente,
+apague a linha dele na aba `Pedidos`.
 
 > Observação honesta: o site registra o pedido quando o cliente **toca em enviar**,
 > não quando a mensagem chega no WhatsApp. Se ele montar, tocar em enviar e desistir,
@@ -147,9 +151,42 @@ na página Pedidos (continuam valendo no resumo do dia).
 
 ---
 
-## Depois: consumo de ingredientes
+## Relatórios, clientes e consumo de ingredientes
 
-Quando você tiver quanto de cada ingrediente entra numa pizza grande
-(ex.: 200 g de mussarela, 120 g de calabresa…), me passe a lista que eu
-adiciono ao script um bloco que transforma "18 calabresas" em
-"3,6 kg de mussarela + 2,2 kg de calabresa + …" no resumo do dia.
+Três abas novas no `/admin`:
+
+| Aba | O que mostra |
+| --- | --- |
+| **Relatórios** | Pedidos, faturamento, ticket médio, **sabor mais pedido** (hoje, ontem, 7 ou 30 dias, ou datas escolhidas), gráficos por sabor, dia, horário e dia da semana, e a tabela de **ingredientes usados** com o custo. |
+| **Clientes** | Cada cliente (agrupado pelo telefone): quantos pedidos, quanto gastou, **sabores que mais pede**, **dia da semana** preferido, de quanto em quanto tempo volta, como paga. Tem busca e um botão para abrir a conversa no WhatsApp. |
+| **Receitas** | Quanto de cada ingrediente vai em uma pizza grande. É daqui que sai a conta do consumo. |
+
+### Como o consumo é calculado
+
+- **Sabor único:** a receita do sabor. **Meio a meio:** metade da receita de cada sabor.
+- **Broto e calzone:** uma proporção da grande (aba Receitas → Tamanhos; o broto começa em 50%).
+- **"Sem cebola":** a cebola daquela metade não entra. "Sem azeitona" tira das duas metades.
+- **Adicional:** a mesma quantidade do ingrediente na pizza (adicional de bacon = a quantidade de bacon da receita).
+- **Borda recheada:** quantidade própria de cada borda (aba Receitas).
+- Pedido **cancelado** nunca conta. Em Relatórios dá para contar **só os confirmados**.
+- **Nada é inventado:** ingrediente sem quantidade cadastrada fica de fora e o relatório (e o e-mail) avisa qual falta.
+- **Custo:** o nome do ingrediente é cruzado com a aba **Insumos** (mesmo nome, ex.: Mussarela; unidade `kg`, `g` ou `un`). Insumo sem preço ou em outra unidade é listado como "sem preço utilizável".
+
+### No fechamento da noite
+
+O `resumoDoDia` agora também:
+
+1. escreve no **Resumo do dia** o bloco "Ingredientes usados" (kg/g/un e custo) e a sobra (faturamento − custo dos ingredientes);
+2. grava os ingredientes do dia na aba **Consumo diário** (uma linha por ingrediente por dia, para somar semana/mês na própria planilha; rodar de novo no mesmo dia não duplica);
+3. manda tudo no e-mail.
+
+### Ligar (quem já tinha o painel)
+
+1. No Apps Script, substitua o conteúdo de **`estoque.gs`** e de **`admin.gs`** pelos desta pasta e confira `EMAIL_RESUMO`.
+2. **Implantar → Gerenciar implantações → ✏️ → Versão: _Nova versão_ → Implantar** (mesmo link).
+3. Publique o site (`git push`), abra `/admin` → **Receitas**: ela já vem preenchida com as quantidades informadas pela pizzaria. Confira, complete o que estiver em branco e clique em **Salvar alterações**.
+4. Em **Insumos**, cadastre o preço de cada ingrediente para o custo aparecer.
+
+A aba `Pedidos` ganha sozinha a coluna **Telefone** no próximo pedido; as abas `Receitas` e `Consumo diário` são criadas na hora certa.
+
+> Pedidos feitos **antes** desta atualização não têm nome nem telefone: entram nos relatórios, mas não nos históricos de Clientes. Pedidos digitados no painel entram em Clientes quando têm nome ou telefone.

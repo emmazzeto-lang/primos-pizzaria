@@ -8,6 +8,7 @@
  *   POST {action:"login"}    → confere a senha, devolve um token de sessão (6 h).
  *   POST {action:"get"|"save"|"logout", token} → só com token válido.
  *   POST {action:"pedidos"|"pedido_status"|"pedido_novo", token} → página de pedidos do painel.
+ *   POST {action:"relatorio"|"clientes", token} → gráficos, consumo de ingredientes e histórico dos clientes.
  *
  * A senha NÃO fica no código: crie a propriedade de script ADMIN_SENHA
  * (Configurações do projeto → Propriedades do script). Sem ela o painel não abre.
@@ -66,6 +67,12 @@ function adminPost_(d) {
       case 'pedido_novo':
         exigeSessao_(d.token);
         return json_(novoPedidoManual_(d));
+      case 'relatorio':
+        exigeSessao_(d.token);
+        return json_(relatorio_(d));
+      case 'clientes':
+        exigeSessao_(d.token);
+        return json_(clientes_());
       default:
         return json_({ ok: false, erro: 'Ação desconhecida.' });
     }
@@ -199,6 +206,7 @@ function lerTudo_(comInsumos) {
       const preco = numero_(l[2]);
       if (nome && preco !== null) saida.insumos.push({ nome: nome, unidade: String(l[1]).trim(), preco: preco });
     });
+    saida.receitas = lerReceitasPainel_();
   }
   return saida;
 }
@@ -231,6 +239,7 @@ function salvar_(d) {
   const pre = d.precos !== undefined ? validaPrecos_(d.precos) : null;
   const pro = d.promos !== undefined ? validaPromos_(d.promos) : null;
   const ins = d.insumos !== undefined ? validaInsumos_(d.insumos) : null;
+  const rec = d.receitas !== undefined ? validaReceitas_(d.receitas) : null;
 
   // 2) grava
   const lock = LockService.getScriptLock();
@@ -259,6 +268,21 @@ function salvar_(d) {
     if (ins) {
       escreverAba_(ABA_INSUMOS, ['insumo', 'unidade', 'preço por unidade (R$)'],
         ins.map(function (i) { return [celula_(i.nome), celula_(i.unidade), i.preco]; }), [1, 2]);
+    }
+    if (rec) {
+      const q = function (v) { return v === null ? '' : v; };
+      const linhasRec = [];
+      rec.padrao.forEach(function (x) { linhasRec.push(['padrao', '', celula_(x.ing), q(x.qtd), x.un, '']); });
+      linhasRec.push(['fator', '', 'broto', rec.fatores.broto, '', '']);
+      linhasRec.push(['fator', '', 'calzone', rec.fatores.calzone, '', '']);
+      rec.bordas.forEach(function (x) { linhasRec.push(['borda', '', celula_(x.nome), q(x.qtd), x.un, '']); });
+      rec.sabores.forEach(function (s) {
+        s.itens.forEach(function (x) {
+          linhasRec.push(['sabor', celula_(s.nome), celula_(x.ing), q(x.qtd), x.un, x.excecao ? 'sim' : '']);
+        });
+      });
+      escreverAba_(ABA_RECEITAS, ['tipo', 'sabor', 'ingrediente', 'quantidade', 'unidade (g ou un)', 'exceção'],
+        linhasRec, [1, 2, 3, 5, 6]);
     }
     CacheService.getScriptCache().remove('publico');
     return { ok: true, salvoEm: agora };
@@ -375,6 +399,54 @@ function validaInsumos_(lista) {
   return saida;
 }
 
+/** Receitas: quanto de cada ingrediente vai em cada sabor (grande), fatores de tamanho e bordas. */
+function validaReceitas_(r) {
+  if (!r || typeof r !== 'object' || Array.isArray(r)) throw new ErroUsuario('Receitas inválidas.');
+  const qtd = function (v, campo) {
+    if (v === null || v === undefined || v === '') return null;          // ainda sem quantidade
+    const n = typeof v === 'number' ? v : numero_(v);
+    if (n === null || n < 0 || n > 5000) throw new ErroUsuario('Quantidade inválida em "' + campo + '" (use de 0 a 5000).');
+    return Math.round(n * 100) / 100;
+  };
+  const un = function (v) { return v === 'un' ? 'un' : 'g'; };
+  const lista = function (v, max, campo) {
+    if (v === undefined) return [];
+    if (!Array.isArray(v) || v.length > max) throw new ErroUsuario('Lista de "' + campo + '" inválida.');
+    return v;
+  };
+
+  const padrao = [], vistos = {};
+  lista(r.padrao, 200, 'ingredientes').forEach(function (x) {
+    const ing = texto_(x && x.ing, 60, 'Ingrediente', true);
+    if (vistos[norm_(ing)]) return;
+    vistos[norm_(ing)] = true;
+    padrao.push({ ing: ing, qtd: qtd(x.qtd, ing), un: un(x.un) });
+  });
+
+  const fatores = {};
+  ['broto', 'calzone'].forEach(function (k) {
+    const f = r.fatores && r.fatores[k] !== undefined ? numero_(r.fatores[k]) : 1;
+    if (f === null || f < 0.05 || f > 5) throw new ErroUsuario('Proporção de "' + k + '" inválida (use entre 5% e 500%).');
+    fatores[k] = Math.round(f * 1000) / 1000;
+  });
+
+  const bordas = lista(r.bordas, 20, 'bordas').map(function (x) {
+    const nome = texto_(x && x.nome, 40, 'Borda', true);
+    return { nome: nome, qtd: qtd(x.qtd, 'Borda ' + nome), un: un(x.un) };
+  });
+
+  const sabores = lista(r.sabores, 80, 'sabores').map(function (s) {
+    const nome = texto_(s && s.nome, 60, 'Sabor', true);
+    const itens = lista(s.itens, 40, nome).map(function (x) {
+      const ing = texto_(x && x.ing, 60, 'Ingrediente de ' + nome, true);
+      return { ing: ing, qtd: qtd(x.qtd, nome + ' — ' + ing), un: un(x.un), excecao: x.excecao === true };
+    });
+    return { nome: nome, itens: itens };
+  });
+
+  return { padrao: padrao, fatores: fatores, bordas: bordas, sabores: sabores };
+}
+
 /* ------------------------------------------------------------------ */
 /*  Pedidos (página "Pedidos" do painel)                              */
 /* ------------------------------------------------------------------ */
@@ -412,6 +484,7 @@ function listaPedidos_() {
       pagamento: String(l[COL.PAGAMENTO - 1] || ''),
       total: Number(l[COL.TOTAL - 1]) || 0,
       cliente: String(l[COL.CLIENTE - 1] || ''),
+      telefone: String(l[COL.TELEFONE - 1] || ''),
       obs: String(l[COL.OBS - 1] || ''),
       itens: itens,
       texto: String(l[COL.ITENS - 1] || ''),
@@ -468,8 +541,12 @@ function novoPedidoManual_(d) {
   if (quando.getTime() > agora + 24 * 3600 * 1000) throw new ErroUsuario('A data do pedido está no futuro.');
   if (quando.getTime() < agora - 31 * 24 * 3600 * 1000) throw new ErroUsuario('A data do pedido é muito antiga (máximo 31 dias).');
 
+  const telefone = limpaTelefone_(d.telefone);
+  if (String(d.telefone || '').trim() && !telefone) throw new ErroUsuario('Telefone inválido (use DDD + número).');
+
   const id = gravaPedido_({
     quando: quando,
+    telefone: telefone,
     bairro: texto_(d.bairro, 80, 'Bairro', false),
     pagamento: pagamento,
     total: dinheiro_(d.total, 10000, 'Total'),
@@ -478,9 +555,205 @@ function novoPedidoManual_(d) {
     status: 'confirmado',        // quem digita já combinou o pedido
     origem: origem,
     entrega: entrega,
-    cliente: texto_(d.cliente, 60, 'Cliente', false),
+    cliente: limpaNome_(texto_(d.cliente, 60, 'Cliente', false)),
     obs: texto_(d.obs, 200, 'Observação', false),
   });
   return { ok: true, id: id };
+}
+
+/* ------------------------------------------------------------------ */
+/*  Relatórios e clientes                                             */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Pedidos já "abertos" (data/dia da semana/hora no fuso da planilha, itens em objeto).
+ * Lê só as últimas `maxLinhas` linhas e, se `desdeMs`, ignora o que for mais antigo.
+ */
+function lerPedidosRecentes_(maxLinhas, desdeMs) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const aba = ss.getSheetByName(ABA_PEDIDOS);
+  if (!aba || aba.getLastRow() < 2) return [];
+
+  const ultima = aba.getLastRow();
+  const n = Math.min(ultima - 1, maxLinhas);
+  const linhas = aba.getRange(ultima - n + 1, 1, n, CABECALHO_PEDIDOS.length).getValues();
+  const tz = ss.getSpreadsheetTimeZone();
+  const saida = [];
+
+  linhas.forEach(function (l) {
+    const quando = l[0] instanceof Date ? l[0] : new Date(l[0]);
+    if (isNaN(quando.getTime())) return;
+    if (desdeMs && quando.getTime() < desdeMs) return;
+
+    const partes = Utilities.formatDate(quando, tz, 'yyyy-MM-dd|u|H').split('|');
+    var itens = [];
+    try { itens = JSON.parse(l[COL.DETALHE - 1]); } catch (e) {}
+    if (!Array.isArray(itens)) itens = [];
+    const status = String(l[COL.STATUS - 1]);
+
+    saida.push({
+      quando: quando.getTime(),
+      dia: partes[0],
+      diaSemana: Number(partes[1]) % 7,            // 'u': 1=segunda … 7=domingo → 0=domingo … 6=sábado
+      hora: Number(partes[2]),
+      status: STATUS_VALIDOS.indexOf(status) >= 0 ? status : 'novo',
+      origem: ORIGENS_VALIDAS.indexOf(String(l[COL.ORIGEM - 1])) >= 0 ? String(l[COL.ORIGEM - 1]) : 'site',
+      entrega: String(l[COL.ENTREGA - 1]) === 'retirada' ? 'retirada' : 'entrega',
+      bairro: String(l[COL.BAIRRO - 1] || '').trim(),
+      pagamento: String(l[COL.PAGAMENTO - 1] || '').trim(),
+      total: Number(l[COL.TOTAL - 1]) || 0,
+      cliente: String(l[COL.CLIENTE - 1] || '').trim(),
+      telefone: String(l[COL.TELEFONE - 1] || '').trim(),
+      itens: itens,
+    });
+  });
+  return saida;
+}
+
+/** Pedido cancelado nunca conta; com `soConfirmados`, só confirmado/entregue. */
+function contaPedido_(p, soConfirmados) {
+  if (p.status === 'cancelado') return false;
+  return !soConfirmados || p.status === 'confirmado' || p.status === 'entregue';
+}
+
+function dataIso_(v, campo) {
+  const s = String(v || '');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s) || isNaN(Date.parse(s + 'T12:00:00Z'))) {
+    throw new ErroUsuario('Data inválida em "' + campo + '".');
+  }
+  return s;
+}
+
+function diasEntre_(de, ate) {
+  const out = [];
+  const fim = Date.parse(ate + 'T12:00:00Z');
+  for (var t = Date.parse(de + 'T12:00:00Z'); t <= fim; t += 86400000) out.push(new Date(t).toISOString().slice(0, 10));
+  return out;
+}
+
+function maisFrequente_(mapa) {
+  var melhor = '', max = 0;
+  Object.keys(mapa).forEach(function (k) { if (mapa[k] > max) { max = mapa[k]; melhor = k; } });
+  return melhor;
+}
+
+function lista_(mapa, limite) {
+  return Object.keys(mapa)
+    .map(function (k) { return { nome: k, qtd: mapa[k] }; })
+    .sort(function (a, b) { return b.qtd - a.qtd || (a.nome < b.nome ? -1 : 1); })
+    .slice(0, limite);
+}
+
+/** Sabores de um item (meio a meio conta para os dois). Bebida não entra. */
+function saboresDoItem_(it) {
+  if (!it || it.tipo === 'bebida') return [];
+  return it.meio ? [it.sabor, it.meio] : [it.sabor];
+}
+
+/** Números e gráficos de um período: sabores, dias, horários, pagamentos e consumo de ingredientes. */
+function relatorio_(d) {
+  const de = dataIso_(d.de, 'De'), ate = dataIso_(d.ate, 'Até');
+  if (de > ate) throw new ErroUsuario('A data inicial vem depois da final.');
+  const dias = diasEntre_(de, ate);
+  if (dias.length > 93) throw new ErroUsuario('Escolha um período de até 3 meses.');
+  const soConf = d.soConfirmados === true;
+
+  // margem de 36 h para o fuso: o filtro exato é feito pelo dia no fuso da planilha
+  const desde = Date.parse(de + 'T00:00:00Z') - 36 * 3600 * 1000;
+  const pedidos = lerPedidosRecentes_(5000, desde).filter(function (p) {
+    return p.dia >= de && p.dia <= ate && contaPedido_(p, soConf);
+  });
+
+  const rec = receitasIndexadas_();
+  const acc = novoConsumo_();
+  const sabores = {}, bebidas = {}, bordas = {}, pagamentos = {}, origens = {}, bairros = {};
+  const porDia = {}, porSemana = [], porHora = [];
+  dias.forEach(function (x) { porDia[x] = { dia: x, pedidos: 0, faturamento: 0 }; });
+  for (var i = 0; i < 7; i++) porSemana.push({ dia: i, pedidos: 0, faturamento: 0 });
+  for (var h = 0; h < 24; h++) porHora.push({ hora: h, pedidos: 0 });
+  var faturamento = 0, entregas = 0, retiradas = 0;
+
+  pedidos.forEach(function (p) {
+    faturamento += p.total;
+    porDia[p.dia].pedidos++;           porDia[p.dia].faturamento += p.total;
+    porSemana[p.diaSemana].pedidos++;  porSemana[p.diaSemana].faturamento += p.total;
+    porHora[p.hora].pedidos++;
+    if (p.entrega === 'retirada') retiradas++; else { entregas++; if (p.bairro) somar_(bairros, p.bairro, 1); }
+    if (p.pagamento) somar_(pagamentos, p.pagamento, 1);
+    somar_(origens, p.origem, 1);
+    p.itens.forEach(function (it) {
+      const q = it.qtd || 1;
+      consumoDoItem_(it, rec, acc);
+      if (it.tipo === 'bebida') somar_(bebidas, it.sabor, q);
+      saboresDoItem_(it).forEach(function (s) { somar_(sabores, s, q); });
+      if (it.borda) somar_(bordas, it.borda, q);
+    });
+  });
+
+  const cons = fechaConsumo_(acc, insumosIndexados_());
+  const arred = function (n) { return Math.round(n * 100) / 100; };
+  return {
+    ok: true, de: de, ate: ate, soConfirmados: soConf,
+    pedidos: pedidos.length,
+    faturamento: arred(faturamento),
+    ticketMedio: pedidos.length ? arred(faturamento / pedidos.length) : 0,
+    entregas: entregas, retiradas: retiradas,
+    sabores: lista_(sabores, 12),
+    bebidas: lista_(bebidas, 6),
+    bordas: lista_(bordas, 6),
+    pagamentos: lista_(pagamentos, 6),
+    origens: lista_(origens, 6),
+    bairros: lista_(bairros, 6),
+    porDia: dias.map(function (x) { return { dia: x, pedidos: porDia[x].pedidos, faturamento: arred(porDia[x].faturamento) }; }),
+    porDiaSemana: porSemana.map(function (x) { return { dia: x.dia, pedidos: x.pedidos, faturamento: arred(x.faturamento) }; }),
+    porHora: porHora,
+    consumo: { itens: cons.itens, custoTotal: cons.custoTotal, faltas: cons.faltas, semPreco: cons.semPreco, receitasSalvas: rec.existe },
+  };
+}
+
+/** Histórico de cada cliente identificado (telefone, ou nome quando não há telefone). */
+function clientes_() {
+  const pedidos = lerPedidosRecentes_(4000, 0).filter(function (p) { return contaPedido_(p, false); });
+  const mapa = {};
+  var semIdentificacao = 0;
+
+  pedidos.forEach(function (p) {
+    const chave = p.telefone ? 't' + p.telefone : (p.cliente ? 'n' + norm_(p.cliente) : '');
+    if (!chave) { semIdentificacao++; return; }
+    const c = mapa[chave] || (mapa[chave] = {
+      chave: chave, nome: '', telefone: p.telefone, ultimoTs: 0, pedidos: 0, gasto: 0,
+      dias: {}, sabores: {}, semana: [0, 0, 0, 0, 0, 0, 0], pagamentos: {}, bairros: {},
+    });
+    c.pedidos++;
+    c.gasto += p.total;
+    c.dias[p.dia] = true;
+    c.semana[p.diaSemana]++;
+    if (p.pagamento) somar_(c.pagamentos, p.pagamento, 1);
+    if (p.entrega === 'entrega' && p.bairro) somar_(c.bairros, p.bairro, 1);
+    if (p.cliente && p.quando >= c.ultimoTs) c.nome = p.cliente;   // nome mais recente
+    if (p.quando >= c.ultimoTs) c.ultimoTs = p.quando;
+    p.itens.forEach(function (it) {
+      saboresDoItem_(it).forEach(function (s) { somar_(c.sabores, s, it.qtd || 1); });
+    });
+  });
+
+  const lista = Object.keys(mapa).map(function (k) {
+    const c = mapa[k];
+    const dias = Object.keys(c.dias).sort();
+    var intervalo = null;
+    if (dias.length >= 2) {
+      intervalo = Math.round((Date.parse(dias[dias.length - 1] + 'T12:00:00Z') - Date.parse(dias[0] + 'T12:00:00Z')) / 86400000 / (dias.length - 1));
+    }
+    return {
+      chave: c.chave, nome: c.nome, telefone: c.telefone,
+      pedidos: c.pedidos, gasto: Math.round(c.gasto * 100) / 100,
+      ticketMedio: Math.round(c.gasto / c.pedidos * 100) / 100,
+      primeiro: dias[0], ultimo: dias[dias.length - 1], intervaloDias: intervalo,
+      sabores: lista_(c.sabores, 8), semana: c.semana,
+      pagamento: maisFrequente_(c.pagamentos), bairro: maisFrequente_(c.bairros),
+    };
+  }).sort(function (a, b) { return b.pedidos - a.pedidos || (a.ultimo < b.ultimo ? 1 : -1); });
+
+  return { ok: true, clientes: lista.slice(0, 400), total: lista.length, semIdentificacao: semIdentificacao };
 }
 

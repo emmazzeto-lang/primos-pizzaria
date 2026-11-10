@@ -14,6 +14,7 @@ import { PIZZAS, BORDA, ADICIONAIS, BEBIDAS } from "../src/menu-data.js";
 import { brl } from "../src/lib/format.js";
 import { frasesSem } from "../src/lib/item-text.js";
 import { h } from "./dom.js";
+import { fmtTelefone } from "./formatos.js";
 
 const STATUS_ROTULO = { novo: "Novo", confirmado: "Confirmado", entregue: "Entregue", cancelado: "Cancelado" };
 const ORIGEM_ROTULO = {
@@ -148,7 +149,7 @@ export function criarPedidos(ctx) {
           }))
         : h("p", { class: "ped__det" }, p.texto || "(sem itens)"),
       h("p", { class: "ped__meta" }, meta, " — ", h("b", {}, brl(p.total))),
-      p.cliente || p.obs ? h("p", { class: "ped__det" }, [p.cliente && `Cliente: ${p.cliente}`, p.obs && `Obs.: ${p.obs}`].filter(Boolean).join(" · ")) : false,
+      p.cliente || p.telefone || p.obs ? h("p", { class: "ped__det" }, [p.cliente && `Cliente: ${p.cliente}`, p.telefone && fmtTelefone(p.telefone), p.obs && `Obs.: ${p.obs}`].filter(Boolean).join(" · ")) : false,
       h("div", { class: "ped__acoes" }, acoesDe(p))
     );
   }
@@ -239,7 +240,7 @@ export function criarPedidos(ctx) {
   }
 
   function novoForm() {
-    return { quando: agoraLocal(), origem: "", entrega: "entrega", bairro: "", pagamento: "", cliente: "", obs: "", itens: [novaLinha()], totalManual: null, erro: "" };
+    return { quando: agoraLocal(), origem: "", entrega: "entrega", bairro: "", pagamento: "", cliente: "", telefone: "", obs: "", itens: [novaLinha()], totalManual: null, erro: "" };
   }
 
   const precos = () => ctx.estado().precos;
@@ -400,7 +401,11 @@ export function criarPedidos(ctx) {
           campoSelect("Pagamento", [["", "Escolha…"], ...PAGAMENTOS.map((p) => [p, p])], form.pagamento, (v) => (form.pagamento = v))
         ),
         form.entrega === "entrega" ? campoTexto("fm-bairro", "Bairro (opcional)", "bairro", 80) : false,
-        campoTexto("fm-cliente", "Cliente (opcional)", "cliente", 60, "ex.: Dona Maria"),
+        h("div", { class: "duas" },
+          campoTexto("fm-cliente", "Cliente (opcional)", "cliente", 60, "ex.: Dona Maria"),
+          campoTexto("fm-tel", "Telefone (opcional)", "telefone", 20, "(14) 9.....")
+        ),
+        h("p", { class: "muted" }, "Com o telefone, o pedido entra no histórico do cliente (aba Clientes)."),
         h("h3", { class: "sub-h" }, "Itens"),
         linhas,
         h("button", { type: "button", class: "btn btn--ghost", disabled: form.itens.length >= 25, onclick: () => { form.itens.push(novaLinha()); desenhaForm(); } }, "+ Adicionar outro item"),
@@ -432,7 +437,7 @@ export function criarPedidos(ctx) {
       try {
         const r = await ctx.api("pedido_novo", {
           quando: quando.toISOString(), origem: form.origem, entrega: form.entrega, pagamento: form.pagamento,
-          bairro: form.entrega === "entrega" ? form.bairro : "", cliente: form.cliente, obs: form.obs,
+          bairro: form.entrega === "entrega" ? form.bairro : "", cliente: form.cliente, telefone: form.telefone, obs: form.obs,
           total: Math.round(total * 100) / 100, itens: form.itens.map(itemParaEnvio),
         });
         ctx.aviso(`Pedido #${r.id} registrado.`);

@@ -29,7 +29,7 @@ export const PIZZAS = [
   { id: "florenca",       nome: "Florença",    preco: 75, ing: ["mussarela", "muçarela de búfala", "atum", "tomate", "cebola", "bacon", "rúcula"] },
   { id: "regipa",         nome: "Regipa",      preco: 75, ing: ["mussarela", "muçarela de búfala", "rúcula", "tomate seco"] },
   { id: "vegetariana",    nome: "Vegetariana", preco: 75, ing: ["mussarela", "muçarela de búfala", "brócolis", "palmito", "tomate seco"] },
-  { id: "pepperoni",      nome: "Pepperoni",   preco: 75, ing: ["mussarela", "pepperoni"] }, // CONFIRMAR ingredientes
+  { id: "pepperoni",      nome: "Pepperoni",   preco: 75, ing: ["mussarela", "pepperoni", "cebola"] }, // cebola: informada pela pizzaria (100 g)
 
   // ---- doces (R$ 60) — CONFIRMAR ingredientes ----
   { id: "choco-morango",  nome: "Chocolate com morango", preco: 60, doce: true, ing: ["chocolate", "morango"] },

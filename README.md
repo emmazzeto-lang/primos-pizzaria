@@ -37,6 +37,10 @@ confirmação acontece na conversa.
   dias e horário, altera preços, cria promoções por dia da semana e
   cadastra o preço dos insumos — tudo gravado na planilha Google e lido pelo site
   (ver [`apps-script/`](apps-script/README.md)).
+- **Relatórios e clientes (painel):** gráficos do sabor mais pedido, dias e horários
+  de movimento; **consumo de ingredientes** calculado a partir das receitas (com custo,
+  quando os insumos têm preço); e o **histórico de cada cliente** (sabores e dias da
+  semana que mais pede). Tudo também no resumo do fim da noite, na planilha.
 - **Controle de estoque opcional:** cada pedido enviado pode ser registrado numa
   planilha Google (ver [`apps-script/`](apps-script/README.md)).
 - Acessível: foco de teclado visível, diálogos nativos (`<dialog>`), `prefers-reduced-motion`.
@@ -78,7 +82,14 @@ primos-site/
 │       ├── dom.js         # atalhos $ e $$
 │       ├── format.js      # formatação de dinheiro/texto
 │       └── bus.js         # event bus mínimo ("cart:changed")
-├── admin/                 # painel da dona (app.js = ajustes, pedidos.js = pedidos)
+├── admin/                 # painel da dona
+│   ├── app.js             #   entrada: login, abas e salvar (ajustes)
+│   ├── pedidos.js         #   acompanhar/confirmar pedidos e registrar os de fora do site
+│   ├── relatorios.js      #   números, gráficos e consumo de ingredientes
+│   ├── clientes.js        #   histórico de consumo de cada cliente
+│   ├── receitas.js        #   quantidade de cada ingrediente por pizza
+│   ├── receitas-padrao.js #   valores iniciais informados pela pizzaria
+│   └── graficos.js        #   barras e colunas em DOM puro (sem biblioteca)
 ├── assets/
 │   └── logo.png
 └── apps-script/           # servidor na planilha Google (Google Apps Script)
@@ -125,8 +136,10 @@ Passo a passo em [`apps-script/README.md`](apps-script/README.md). Resumo: cria-
 uma planilha Google com o script `apps-script/estoque.gs`, publica-se como "app da
 web" e cola-se a URL em `CONFIG.estoque`. Cada pedido enviado vira uma linha; no
 fim da noite sai um resumo (sabores, bordas, faturamento), com opção de e-mail
-automático. O site envia só bairro, pagamento, total e itens — **sem** nome,
-telefone ou endereço.
+automático. O site envia bairro, pagamento, total, itens e o **nome e telefone**
+do cliente (para o histórico dele no painel — o formulário avisa isso); o
+**endereço** (rua e número) nunca é enviado. Nome e telefone só ficam visíveis
+para quem tem a senha do painel.
 
 ## Deploy na Vercel
 
